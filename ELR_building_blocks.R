@@ -30,7 +30,7 @@ ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = c(unique(ObsPV$validtime))[2]
-regions = c(unique(ObsPV$region))
+regions = c(unique(ObsPV$region))#[1:2]
 climset = filter(ObsPV, radarmax > 0 & validtime == VT & leadtime_count == LT)
 
 #do transformations for threshold
@@ -60,7 +60,7 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
- # print(AICscores)
+  # print(AICscores)
   return(added)
 }
 
@@ -87,6 +87,7 @@ verify_model_per_reg <- function(test_set, model, reg_set, predictant, test_thre
       reliability.plot(verification_set, titl = paste(paste(names(model_ver$start)[seq(3,length(model_ver$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
     }
   }
+  return(briers)
 }
 
 
@@ -123,7 +124,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   #select model and apply verification result with verification model per region function
   for (i in seq(modellist)){
     model_ver = modellist[[i]]
-    brier = append(brier, verify_model_per_reg(test_set, model_ver, regions, predictant, test_thresholds, length(variables), reliabilityplot = FALSE))
+    briers = append(briers, verify_model_per_reg(test_set, model_ver, regions, predictant, test_thresholds, length(variables), reliabilityplot = FALSE))
   }
 
   #add to results list
