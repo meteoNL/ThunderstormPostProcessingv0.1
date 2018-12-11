@@ -80,7 +80,7 @@ verify_model_per_reg <- function(test_set, model, reg_set, predictant, test_thre
     values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_thresholds)
     verification_set <- verify(as.numeric(observed < test_thresholds), values, frcst.type = "prob", obs.type = "binary", title = "")
     brierval = brier(as.numeric(observed < test_thresholds), values, bins = FALSE)$bs
-    briers = append(briers, c(i, reg, y, brierval))
+    briers = append(briers, c(y, i, reg, brierval))
 
     #if required plot reliability plot
     if (reliabilityplot == TRUE){
@@ -157,10 +157,10 @@ for(y in years){
                                       train_thresholds = thres, test_thresholds = thres, maxnumbervars = maxvars)
 
     #put results in dataframes and vectors
-    brierdataframe = data.frame(result$brierscores) #rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
-    #                                npredictors = (result$briers)[seq(2,length(result$briers),4)],
-    #                                region = (result$briers)[seq(3,length(result$briers),4)],
-    #                                brier_score = (result$briers)[seq(4,length(result$briers),4)]))
+    brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
+                                                      npredictors = (result$briers)[seq(2,length(result$briers),4)],
+                                                      region = (result$briers)[seq(3,length(result$briers),4)],
+                                                      brier_score = (result$briers)[seq(4,length(result$briers),4)]))
 
     models = append(models, result$models)
   }
@@ -170,9 +170,9 @@ for(y in years){
   test_fin = filter(climset, Year == y)
   result = fit_extended_logitModels(train_fin, test_fin, predictant = ind_predictant, pot_pred_indices = varindex,
                                     train_thresholds = thres, test_thresholds = thres, maxnumbervars = maxvars)
-  brierdataframe = data.frame(result$brierscores)#rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
-  #                                 npredictors = (result$briers)[seq(2,length(result$briers),4)],
-  #                                region = (result$briers)[seq(3,length(result$briers),4)],
-  #                               brier_score = (result$briers)[seq(4,length(result$briers),4)]))
+  brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
+                                                    npredictors = (result$briers)[seq(2,length(result$briers),4)],
+                                                    region = (result$briers)[seq(3,length(result$briers),4)],
+                                                    brier_score = (result$briers)[seq(4,length(result$briers),4)]))
   models = append(models, result$models)
 }
