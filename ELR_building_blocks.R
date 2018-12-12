@@ -17,14 +17,14 @@ library(MASS)
 library(verification)
 library(arm)
 library(crch)
-
-rm(list=ls(all=TRUE))
+library(profvis)
+#rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
-p = 0.001 #power transformation to linearize thresholds
-maxvars = 4
+p = 0.5 #power transformation to linearize thresholds
+maxvars = 3
 numsubset = 3 #number of subsets for hyperparametersetting
-thres = (0.1*exp(seq(0,9)/3))
+thres = (0.3*exp(seq(0,2)/2))
 thres_eval = 10.0 * thres
 ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
 years = c(as.numeric(unique(ObsPV$Year)))
@@ -64,7 +64,7 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   return(added)
 }
 
-verify_model_per_reg <- function(test_set, model, reg_set, predictant, test_thresholds, i, reliabilityplot = FALSE){
+verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_thresholds, i, reliabilityplot = FALSE){
   briers = c()
   for(reg in reg_set){
 
@@ -74,13 +74,13 @@ verify_model_per_reg <- function(test_set, model, reg_set, predictant, test_thre
     #get observations for this region
     observed = data.frame(matrix(rep(as.matrix(region_subset[predictant]),length(test_thresholds)),ncol=length(test_thresholds)))
 
-    #May make one more separate function from what is below
-
     #predict with model and verify, calculate bs
     values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_thresholds)
     verification_set <- verify(as.numeric(observed < test_thresholds), values, frcst.type = "prob", obs.type = "binary", title = "")
-    brierval = brier(as.numeric(observed < test_thresholds), values, bins = FALSE)$bs
-    briers = append(briers, c(y, i, reg, brierval))
+    eval = brier(as.numeric(observed < test_thresholds), values, bins = FALSE)
+    brierval = eval$bs
+    brierbase = eval$bs.baseline
+    briers = append(briers, c(y, i, reg, brierval, brierbase))
 
     #if required plot reliability plot
     if (reliabilityplot == TRUE){
@@ -98,6 +98,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   variables = c()
   briers = c()
   results = list()
+  n_variables = c()
 
   #select the best predictor and add to first model
   added = fit_test_all_pot_pred(train_set, predictant, pot_pred_indices, train_thresholds)
@@ -106,6 +107,8 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   #add this model to the model list
   firstmodel = hxlr(reformulate(termlabels = names(data.frame(train_set[variables])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[variables]), thresholds = train_thresholds)
   modellist = list(firstmodel)
+  print(length(variables))
+  append(n_variables, length(variables))
 
   ### ITERATION, ADDING VARIABLES
   while(length(variables) < maxvars){
@@ -119,12 +122,16 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     #add model based on these variables to model list
     bestmodel = hxlr(reformulate(termlabels = names(data.frame(train_set[variables])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[variables]), thresholds = train_thresholds)
     modellist = append(modellist, list(bestmodel))
+    n_variables = append(n_variables, length(variables))
   }
 
   #select model and apply verification result with verification model per region function
   for (i in seq(modellist)){
     model_ver = modellist[[i]]
-    briers = append(briers, verify_model_per_reg(test_set, model_ver, regions, predictant, test_thresholds, length(variables), reliabilityplot = FALSE))
+    n_variables_i = n_variables[i]
+
+    #length(variables) is not working
+    briers = append(briers, verify_ELRmodel_per_reg(test_set, model_ver, regions, predictant, test_thresholds, n_variables_i, reliabilityplot = FALSE))
   }
 
   #add to results list
@@ -138,8 +145,10 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
 brierdataframe = data.frame()
 models = list()
 
+q = 1
 for(y in years){
   train_fin = filter(climset, Year != y)
+  set.seed(seq(years)[q])
   randomsubset = round(runif(nrow(train_fin))*numsubset+0.5)
   train_sub = cbind(train_fin, subset = randomsubset)
   for(j in seq(numsubset)){
@@ -154,25 +163,28 @@ for(y in years){
 
     #find a fit
     result = fit_extended_logitModels(train_j, test_j, predictant = ind_predictant, pot_pred_indices = varindex,
-                                      train_thresholds = thres, test_thresholds = thres, maxnumbervars = maxvars)
+                                      train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
 
     #put results in dataframes and vectors
-    brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
-                                                      npredictors = (result$briers)[seq(2,length(result$briers),4)],
-                                                      region = (result$briers)[seq(3,length(result$briers),4)],
-                                                      brier_score = (result$briers)[seq(4,length(result$briers),4)]))
+    brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),5)],
+                                                      npredictors = (result$briers)[seq(2,length(result$briers),5)],
+                                                      region = (result$briers)[seq(3,length(result$briers),5)],
+                                                      brier_score = (result$briers)[seq(4,length(result$briers),5)],
+                                                      brier_base = (result$briers)[seq(5,length(result$briers),5)]))
 
     models = append(models, result$models)
   }
+  q = q+1 #update seed set
 }
 
 for(y in years){
   test_fin = filter(climset, Year == y)
   result = fit_extended_logitModels(train_fin, test_fin, predictant = ind_predictant, pot_pred_indices = varindex,
-                                    train_thresholds = thres, test_thresholds = thres, maxnumbervars = maxvars)
-  brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),4)],
-                                                    npredictors = (result$briers)[seq(2,length(result$briers),4)],
-                                                    region = (result$briers)[seq(3,length(result$briers),4)],
-                                                    brier_score = (result$briers)[seq(4,length(result$briers),4)]))
+                                    train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
+  brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),5)],
+                                                    npredictors = (result$briers)[seq(2,length(result$briers),5)],
+                                                    region = (result$briers)[seq(3,length(result$briers),5)],
+                                                    brier_score = (result$briers)[seq(4,length(result$briers),5)],
+                                                    brier_base = (result$briers)[seq(5,length(result$briers),5)]))
   models = append(models, result$models)
 }
