@@ -21,31 +21,32 @@ library(profvis)
 #rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
-p = 0.5 #power transformation to linearize thresholds
-maxvars = 3
-numsubset = 3 #number of subsets for hyperparametersetting
-thres = (0.3*exp(seq(0,2)/2))
-thres_eval = 10.0 * thres
+p = 0.1 #power transformation to linearize thresholds
+maxvars = 4
+numsubset = 3 #number of subsets for hyperparameter selection
+thres = (0.3*exp(seq(0,2)/2)) #precipitation thresholds used for "g(q)"
+thres_eval = 15.0 * thres[1] #precipitation threshold for evaluation
+minpredictant = 0.1 #minimum precipitation sum considered as precipitation
 ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = c(unique(ObsPV$validtime))[2]
 regions = c(unique(ObsPV$region))#[1:2]
-climset = filter(ObsPV, radarmax > 0 & validtime == VT & leadtime_count == LT)
+climset = filter(ObsPV, radarmax > minprec & validtime == VT & leadtime_count == LT)
 
-#do transformations for threshold
+#do transformations for thresholds
 climset$radarmax = climset$radarmax^p
 thres = thres^p
 thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
-#set available variables
+#set available variables & predictant
 varindex=seq(16,99)
 pot_preds=names(climset[varindex])
 ind_predictant = 6
 
 ##
-#transformations Richardson numbers
+#transformations Richardson numbers (otherwise this script for now protests; more transformations will be done in different script)
 cnst_RItrans = 1e-5
 RIindex=c(seq(34,35),seq(76,77))
 climset[RIindex] = log(cnst_RItrans+climset[RIindex])
@@ -53,14 +54,13 @@ plot(climset[RIindex])
 ##
 
 fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train_thresholds, used_preds = c(0)){
-  #selects the best predictor by forward fittng, trying all remaining possible predictors and selecting the one with lowest AIC
+  #selects the best predictor by forward fittng, trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]), thresholds = train_thresholds)
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
-  # print(AICscores)
   return(added)
 }
 
@@ -107,11 +107,10 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   #add this model to the model list
   firstmodel = hxlr(reformulate(termlabels = names(data.frame(train_set[variables])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[variables]), thresholds = train_thresholds)
   modellist = list(firstmodel)
-  print(length(variables))
-  append(n_variables, length(variables))
+  n_variables = append(n_variables, length(variables))
 
   ### ITERATION, ADDING VARIABLES
-  while(length(variables) < maxvars){
+  while(length(variables) < maxnumbervars){
     #update potential predictors remaining
     remaining_indices = pot_pred_indices[!pot_pred_indices%in%variables]
 
@@ -148,7 +147,7 @@ models = list()
 q = 1
 for(y in years){
   train_fin = filter(climset, Year != y)
-  set.seed(seq(years)[q])
+  set.seed(seq(years)[q]) #for reproducability purposes
   randomsubset = round(runif(nrow(train_fin))*numsubset+0.5)
   train_sub = cbind(train_fin, subset = randomsubset)
   for(j in seq(numsubset)){
@@ -188,3 +187,34 @@ for(y in years){
                                                     brier_base = (result$briers)[seq(5,length(result$briers),5)]))
   models = append(models, result$models)
 }
+
+plot(brierdataframe$npredictors, brierdataframe$brier_score)
+
+library(devtools)
+library(testthat)
+usethis::use_testthat()
+test_that("Test dataset and potential predictors complete?", {
+  expect_equal(climset, rbind(train_fin, test_fin))
+  expect_equal(length(pot_preds), length(varindex))
+})
+test_that("Transformation with power p - check", {
+  expect_equal(c(climset[ind_predictant]^(1/p)),c(filter(ObsPV, radarmax > minprec & validtime == VT &
+                                                  leadtime_count == LT)[ind_predictant]))
+  expect_gte(min(climset[ind_predictant]^(1/p)),minpredictant)
+})
+
+regions = c(1)
+testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), region = rep(1,11))
+thresholds_testthat = c(quantile(testthat_df$a,0.25),quantile(testthat_df$a,0.75))
+model_testthat = list(fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models)
+test_that("Testing function fit_test_all_pot_pred",{
+  expect_equal(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 30), 28)
+  expect_equal(fit_test_all_pot_pred(testthat_df, 1, c(2,3), 15), 2)
+  expect_error(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 28))
+  expect_error(fit_test_all_pot_pred(train_j, 28, 28, thres, used_preds = 30))
+  expect_error(fit_test_all_pot_pred(train_j, 150, 28, thres, used_preds = 30))
+})
+
+test_that("Testing function verify_ELRmodel_per_reg",{
+  expect_gt(verify_ELRmodel_per_reg(testthat_df, unlist(model_testthat), regions, 1, thresholds_testthat, 1, reliabilityplot = FALSE),00)
+  })
