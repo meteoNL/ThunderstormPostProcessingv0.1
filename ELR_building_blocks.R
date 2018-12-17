@@ -77,7 +77,9 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
     #predict with model and verify, calculate bs
     values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_thresholds)
     verification_set <- verify(as.numeric(observed < test_thresholds), values, frcst.type = "prob", obs.type = "binary", title = "")
- #   print(observed < test_thresholds)
+    print(max(as.numeric(observed < test_thresholds)*observed))
+
+    #   print(observed < test_thresholds)
   #  print(observed)
    # print(test_thresholds)
     eval = brier(as.numeric(observed < test_thresholds), values, bins = FALSE)
