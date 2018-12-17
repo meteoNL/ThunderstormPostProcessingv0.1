@@ -77,6 +77,9 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
     #predict with model and verify, calculate bs
     values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_thresholds)
     verification_set <- verify(as.numeric(observed < test_thresholds), values, frcst.type = "prob", obs.type = "binary", title = "")
+ #   print(observed < test_thresholds)
+  #  print(observed)
+   # print(test_thresholds)
     eval = brier(as.numeric(observed < test_thresholds), values, bins = FALSE)
     brierval = eval$bs
     brierbase = eval$bs.baseline
@@ -215,7 +218,6 @@ testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), 
 thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
 model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
 test_that("Testing function fit_test_all_pot_pred",{
-  #expect_equal(fit_test_all_pot_pred(testthat_df, 1, c(2,3), thresholds_testthat), 2)
   expect_equal(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 30), 28)
   expect_error(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 28))
   expect_error(fit_test_all_pot_pred(train_j, 28, 28, thres, used_preds = 30))
@@ -240,18 +242,22 @@ test_that("Testing function fit_extended_logitModels compared to verification",{
   expect_equal(fit_extended_logitModels(testthat_df, testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars = 3),"failed")
 })
 
+set.seed(121)
 x1 = rnorm(500,0,5)
 x2 = rnorm(500,0,5)
 x3 = rnorm(500,0,5)
 x4 = rnorm(500,0,5)
-pert = rnorm(500,0,100)
+pert = rnorm(500,0,10)
 y = x1*100 + x4*10 + pert
 testthat_df2 = data.frame(y, x1, x2, x3, x4, region = rep(1,500))
 plot(testthat_df2$y, testthat_df2$x1)
 thresholds_testthat2 = c(quantile(testthat_df2$y,0.25)[[1]],quantile(testthat_df2$y,0.75)[[1]])
 model_testthat2 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 1)$models
-#model_testthat22 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 2)$models
 test_that("Testing the predictor choice among 4 predictors",{
   expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(2,5), thresholds_testthat2), 2)
   expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(3,5), thresholds_testthat2, used_preds = 2), 5)
+  expect_equal(fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = c(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2),fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2))
 })
+print(fit_test_all_pot_pred(testthat_df2, 1, seq(2,5), thresholds_testthat2))
+print(fit_test_all_pot_pred(testthat_df2, 1, seq(3,5), thresholds_testthat2, used_preds = 2))
+model_testthat22 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 2)$models
