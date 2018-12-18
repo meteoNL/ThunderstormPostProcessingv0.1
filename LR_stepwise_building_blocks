@@ -3,11 +3,6 @@
 #For now, sample climatology is used!!!#
 ########################################
 
-
-
-#### BUILD IN SOME TESTING!!!!!
-
-
 #rm(list=ls(all=TRUE))
 ### LOAD EXTERNAL CODE
 library(dplyr)
