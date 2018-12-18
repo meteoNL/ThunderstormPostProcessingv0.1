@@ -209,7 +209,7 @@ test_that("Test dataset and potential predictors complete?", {
 })
 test_that("Transformation with power p - check", {
   expect_equal(c(climset[ind_predictant]^(1/p)),c(filter(ObsPV, radarmax > minpredictant & validtime == VT &
-                                                  leadtime_count == LT)[ind_predictant]))
+                                                           leadtime_count == LT)[ind_predictant]))
   expect_gte(min(climset[ind_predictant]^(1/p)),minpredictant)
 })
 
@@ -225,13 +225,13 @@ test_that("Testing function fit_test_all_pot_pred",{
   expect_error(fit_test_all_pot_pred(train_j, 450, 28, thres, used_preds = 30))
 })
 
-test_that("Testing function verify_ELRmodel_per_reg: Brier scores of probabilities between 0.0 and 0.5 and error expectation",{
-  #expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0)
-  #expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0)
-  #expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0.5)
-  #expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0.5)
-  expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
-})
+test_that("Testing function verify_ELRmodel_per_reg: Brier scores of probabilities between 0.0 and 0.5 and error expectation ",{
+           # expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0)
+           # expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0)
+           # expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0.5)
+           # expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0.5)
+            expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
+            })
 
 test_that("Testing function fit_extended_logitModels compared to verification",{
   expect_equal(class(model_testthat[[1]]),"hxlr")
@@ -267,4 +267,10 @@ test_that("Verify function test with the second testing dataframe",{
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs.baseline)
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs)
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
+  expect_error(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE))
+})
+
+testthat_df2 = data.frame(y1, x1, x2, x3, x4, region = rep(2,500))
+test_that("Verify function test with the second testing dataframe",{
+  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
 })
