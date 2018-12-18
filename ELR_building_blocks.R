@@ -225,8 +225,7 @@ test_that("Testing function fit_test_all_pot_pred",{
   expect_error(fit_test_all_pot_pred(train_j, 450, 28, thres, used_preds = 30))
 })
 
-test_that("Testing function verify_ELRmodel_per_reg: Brier scores of probabilities between 0.0 and 0.5 (0.5 implies a highly disappointing model as
-          typically high probabilities of 50-100% will then be associated with no occurence and the reverse, 0-50% with occurences",{
+test_that("Testing function verify_ELRmodel_per_reg: Brier scores of probabilities between 0.0 and 0.5 ",{
   expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0)
   expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0)
   expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0.5)
