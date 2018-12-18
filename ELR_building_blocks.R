@@ -214,6 +214,7 @@ test_that("Test resulting brier data frame for obvious errors",{
   expect_lte(min(brierdataframe$brier_score),1)
   expect_gte(min(brierdataframe$brier_base),0)
   expect_lte(min(brierdataframe$brier_base),1)
+  expect_equal(rep(regions,length(brierdataframe$region)/(length(regions))), brierdataframe$region)
 })
 test_that("Test dataset and potential predictors complete?", {
   expect_equal(climset, rbind(train_fin, test_fin))
