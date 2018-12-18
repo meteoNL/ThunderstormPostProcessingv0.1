@@ -73,9 +73,6 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
     observed = data.frame(region_subset[predictant])
 
     #predict with model and verify, calculate bs
-    values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_threshold)
-    show = data.frame(xvar = values, yvar = as.numeric(observed > test_threshold))
-    plot(show)
     verification_set <- verify(as.numeric(observed > test_threshold), (1-values), frcst.type = "prob", obs.type = "binary", title = "")
     eval = brier(as.numeric(observed > test_threshold), (1-values), bins = FALSE)
     brierval = eval$bs
@@ -84,7 +81,7 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
 
     #if required plot reliability plot
     if (reliabilityplot == TRUE){
-      reliability.plot(verification_set, titl = paste(paste(names(model_ver$start)[seq(3,length(model_ver$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
+      reliability.plot(verification_set, titl = paste(paste(names(model$start)[seq(3,length(model$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
     }
   }
   return(briers)
@@ -136,10 +133,9 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
 
     for(j in seq(test_thresholds)){
       test_threshold = test_thresholds[j]
-      briers = append(briers, verify_ELRmodel_per_reg(test_set, model_ver, regions, predictant, test_threshold, n_variables_i, reliabilityplot = FALSE))
+      briers = append(briers, verify_ELRmodel_per_reg(test_set, model_ver, regions, predictant, test_threshold, n_variables_i, reliabilityplot = TRUE))
 
     }
- #   briers = append(briers, verify_ELRmodel_per_reg(test_set, model_ver, regions, predictant, test_thresholds, n_variables_i, reliabilityplot = FALSE))
   }
 
   #add to results list
@@ -253,23 +249,22 @@ x4 = rnorm(500,0,5)
 pert = rnorm(500,0,10)
 y1 = x1*100 + x4*10 + pert
 testthat_df2 = data.frame(y1, x1, x2, x3, x4, region = rep(1,500))
-plot(testthat_df2$y1, testthat_df2$x1)
 thresholds_testthat2 = c(quantile(testthat_df2$y1,0.25)[[1]],quantile(testthat_df2$y1,0.75)[[1]])
 model_testthat2 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 1)$models
 model_testthat22 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 2)$models
+
 test_that("Testing the predictor choice among 4 predictors",{
   expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(2,5), thresholds_testthat2), 2)
   expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(3,5), thresholds_testthat2, used_preds = 2), 5)
   expect_equal(fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = c(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2),fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2))
   expect_equal(model_testthat2[[1]],model_testthat22[[1]])
 })
-model_testthat22 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 2)$models
 
-modelres_manually = exp(0.07722407+0.02944015*thresholds_testthat2[1]+2.947771*testthat_df2$x1)
-modelres2_manually = exp(-1.0190+0.2509*thresholds_testthat2[1]+25.561*x1+2.8129*x4)
-test_that("Verify function with the second testing dataframe",{
- # expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat2[[1]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat2[[1]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs.baseline)
+modelres_manually = exp(0.07722407+0.02944015*thresholds_testthat2[1]-2.94777089*testthat_df2$x1)
+modelres2_manually = exp((-1.0189620+0.2509291*thresholds_testthat2[1]-25.5650782*x1-2.8128970*x4))
+test_that("Verify function test with the second testing dataframe",{
+  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs)
+  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs.baseline)
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs)
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], regions, 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
 })
