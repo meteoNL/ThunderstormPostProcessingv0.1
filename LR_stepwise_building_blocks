@@ -8,7 +8,7 @@
 #### BUILD IN SOME TESTING!!!!!
 
 
-rm(list=ls(all=TRUE))
+#rm(list=ls(all=TRUE))
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
@@ -36,6 +36,10 @@ maxsteps = 6
 
 verify_LRmodel_per_reg <- function(train_set, test_set, model, region_set, predictant, nstepsAIC, thres, reliabilityplot = FALSE){
   briers = c()
+
+  if (length(train_set) != length(test_set)){
+    return("Failed")
+  }
   for (reg in region_set){
     region_subset = filter(test_set, region == reg)
     observed = as.numeric(region_subset[predictant] > thres)
@@ -57,6 +61,10 @@ verify_LRmodel_per_reg <- function(train_set, test_set, model, region_set, predi
 
 fit_logitModels_and_predict <- function(train_set, test_set, region_set = regions, predictant = ind_predictant, pot_pred_indices = varindex,
                          thres = threshold, maxstepsAIC = 10, print_conf = FALSE){
+
+  if(maxstepsAIC > length(pot_pred_indices)){
+    return("Failed")
+  }
 
   #do the reference fit
   nullfit = glm(unlist(train_set[predictant] > thres) ~ 1, data = train_set[pot_pred_indices], family=binomial)
@@ -81,6 +89,9 @@ fit_logitModels_and_predict <- function(train_set, test_set, region_set = region
     #make lists of model, probabilities and brier scores including skill score
     modellist = append(modellist,list(logitMod))
     briers = append(briers, verification_result)
+  }
+  if("Failed" %in% briers){
+    return("Failed")
   }
 
   #returned values
@@ -145,8 +156,45 @@ for(y in years){
   nullfits = append(nullfits, result$nullfit)
 }
 
+# --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime == VT & leadtime_count == LT), rbind(train_fin, test_fin))
   })
- 
- 
+set.seed(228)
+x1 = rnorm(500,0,5)
+x2 = rnorm(500,0,5)
+x3 = rnorm(500,0,5)
+x4 = rnorm(500,0,5)
+pert = rnorm(500,0,10)
+y1 = x1*100+x4*10+pert
+testthat_dfLR = data.frame(y1,x1,x2,x3,x4, region = 1)
+test_model = fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
+                                        thres = threshold, maxstepsAIC = 2, print_conf = FALSE)$model[[1]]
+test_that("Function fit_logitModels_and_predict",{
+  expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),
+                                                                                                              thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24],
+               fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
+                                                                                                              thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24]) ## at index 25, the data frame used for fitting is in the result; these should be different
+  expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
+                              thres = threshold, maxstepsAIC = 3, print_conf = FALSE),"Failed") ## at index 25, the data frame used for fitting is in the result; these should be different
+  expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,190),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
+  expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(3), 1, pot_pred_indices = c(2,190),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
+  expect_error(fit_logitModels_and_predict(train_j, testthat_dfLR, region_set = c(3), 1, pot_pred_indices = c(2,5),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
+  expect_equal(fit_logitModels_and_predict(testthat_dfLR, train_j, region_set = c(3), 1, pot_pred_indices = c(2,5),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE),"Failed") #wrong verification dataframe
+
+})
+
+test_model2 = fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),thres = 1, maxstepsAIC = 2, print_conf = FALSE)$model[[2]]
+values = 0.04868986 + 4.18488448 * x1
+test_that("verify_LRmodel_per_reg works",{
+  expect_equal(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model, c(1), 1, 1, 1, reliabilityplot = FALSE)[4],brier((testthat_dfLR$y1 > 1),(exp(values) / (1+exp(values))), bins = FALSE)$bs, 1e-3)
+  expect_equal(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model2, c(1), 1, 1, 1, reliabilityplot = FALSE)[4],fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),
+                                                                                                                                                                                                                                           thres = 1, maxstepsAIC = 2, print_conf = FALSE)$brier[[8]], 1e-3)
+  expect_warning(verify_LRmodel_per_reg(train_j, train_j, test_model2, c(1), 1, 1, 1, reliabilityplot = FALSE)[4])
+  expect_error(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model2, c(1),  38, 1, 1, reliabilityplot = FALSE))
+
+})
