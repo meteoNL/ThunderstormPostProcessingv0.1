@@ -74,7 +74,6 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
 
     #predict with model and verify, calculate bs
     values <- predict(model, newdata = region_subset, type = "cumprob", thresholds = test_threshold)
-    verification_set <- verify(as.numeric(observed > test_threshold), (1-values), frcst.type = "prob", obs.type = "binary", title = "")
     eval = brier(as.numeric(observed > test_threshold), (1-values), bins = FALSE)
     brierval = eval$bs
     brierbase = eval$bs.baseline
@@ -82,6 +81,7 @@ verify_ELRmodel_per_reg <- function(test_set, model, reg_set, predictant, test_t
 
     #if required plot reliability plot
     if (reliabilityplot == TRUE){
+      verification_set <- verify(as.numeric(observed > test_threshold), (1-values), frcst.type = "prob", obs.type = "binary", title = "")
       reliability.plot(verification_set, titl = paste(paste(names(model$start)[seq(3,length(model$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
     }
   }
@@ -203,6 +203,18 @@ plot(brierdataframe$npredictors, brierdataframe$brier_score)
 library(devtools)
 library(testthat)
 usethis::use_testthat()
+
+test_that("Test resulting brier data frame for obvious errors",{
+  expect_equal(unique(brierdataframe$region), regions)
+  expect_equal(unique(brierdataframe$test_year), years)
+  expect_equal(unique(brierdataframe$test_threshold), thres_eval)
+  expect_gte(min(brierdataframe$npredictors),1)
+  expect_lte(min(brierdataframe$npredictors),maxvars)
+  expect_gte(min(brierdataframe$brier_score),0)
+  expect_lte(min(brierdataframe$brier_score),1)
+  expect_gte(min(brierdataframe$brier_base),0)
+  expect_lte(min(brierdataframe$brier_base),1)
+})
 test_that("Test dataset and potential predictors complete?", {
   expect_equal(climset, rbind(train_fin, test_fin))
   expect_equal(length(pot_preds), length(varindex))
