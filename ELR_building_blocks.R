@@ -270,7 +270,7 @@ test_that("Verify function test with the second testing dataframe",{
   expect_error(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE))
 })
 
-testthat_df2 = data.frame(y1, x1, x2, x3, x4, region = rep(2,500))
-test_that("Verify function test with the second testing dataframe",{
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
+testthat_df2 = data.frame(y1, x1, x2, x3, x4, region = rep(seq(1,2),250))
+test_that("Test region selection",{
+  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1])[seq(2,500,2)],1/(1+modelres2_manually[seq(2,500,2)]), bins = FALSE)$bs.baseline)
 })
