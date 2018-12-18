@@ -56,7 +56,7 @@ verify_LRmodel_per_reg <- function(train_set, test_set, model, region_set, predi
 }
 
 fit_logitModels_and_predict <- function(train_set, test_set, region_set = regions, predictant = ind_predictant, pot_pred_indices = varindex,
-                         thres = threshold, maxstepsAIC = 10, print_conf = FALSE){
+                                        thres = threshold, maxstepsAIC = 10, print_conf = FALSE){
 
   if(maxstepsAIC > length(pot_pred_indices)){
     message("You can not add more variables to the model than the number of available predictors")
@@ -75,7 +75,7 @@ fit_logitModels_and_predict <- function(train_set, test_set, region_set = region
   for (nstepsAIC in seq(maxstepsAIC)){
     logitMod = stepAIC(nullfit, scope = list(upper = lm(unlist(train_set[predictant] > thres) ~ .,
                                                         data=train_set[pot_pred_indices]),
-                                                        lower = ~ 1), trace = 0, steps=nstepsAIC)
+                                             lower = ~ 1), trace = 0, steps=nstepsAIC)
     if(print_conf == TRUE){
       conf=exp(confint.default(logitMod))
       print(conf)
@@ -102,10 +102,12 @@ fit_logitModels_and_predict <- function(train_set, test_set, region_set = region
 brierdataframe = data.frame()
 models = list()
 nullfits = list()
+q = 1
 for(y in years){
 
   #create random subsets to train on
   train = filter(ObsPV, Year != y & validtime == VT & leadtime_count == LT)
+  set.seed(seq(years)[q])
   randomsubset = round(runif(nrow(train))*numsubset+0.5)
   train_sub = cbind(train,subset = randomsubset)
 
@@ -130,6 +132,7 @@ for(y in years){
     models = append(models, result$model)
     nullfits = append(nullfits, result$nullfit)
   }
+  q = q + 1
 }
 
 # aggragate scores to get a graph as function of number of predictors
@@ -156,7 +159,7 @@ for(y in years){
 # --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime == VT & leadtime_count == LT), rbind(train_fin, test_fin))
-  })
+})
 
 test_that("Test resulting brier data frame for obvious errors",{
   expect_equal(unique(brierdataframe$region), regions)
@@ -166,8 +169,8 @@ test_that("Test resulting brier data frame for obvious errors",{
   expect_gte(min(brierdataframe$brier_score),0)
   expect_lte(min(brierdataframe$brier_score),1)
   expect_equal(rep(regions,length(brierdataframe$region)/(length(regions))), brierdataframe$region)
- # expect_gte(min(brierdataframe$brier_base),0)
- # expect_lte(min(brierdataframe$brier_base),1)
+  # expect_gte(min(brierdataframe$brier_base),0)
+  # expect_lte(min(brierdataframe$brier_base),1)
 })
 set.seed(228)
 x1 = rnorm(500,0,5)
@@ -178,14 +181,14 @@ pert = rnorm(500,0,10)
 y1 = x1*100+x4*10+pert
 testthat_dfLR = data.frame(y1,x1,x2,x3,x4, region = 1)
 test_model = fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
-                                        thres = threshold, maxstepsAIC = 2, print_conf = FALSE)$model[[1]]
+                                         thres = threshold, maxstepsAIC = 2, print_conf = FALSE)$model[[1]]
 test_that("Function fit_logitModels_and_predict",{
   expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),
-                                                                                                              thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24],
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24],
                fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
-                                                                                                              thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24]) ## at index 25, the data frame used for fitting is in the result; these should be different
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24]) ## at index 25, the data frame used for fitting is in the result; these should be different
   expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
-                              thres = threshold, maxstepsAIC = 3, print_conf = FALSE),"Failed") ## at index 25, the data frame used for fitting is in the result; these should be different
+                                           thres = threshold, maxstepsAIC = 3, print_conf = FALSE),"Failed") ## at index 25, the data frame used for fitting is in the result; these should be different
   expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,190),
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
   expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(3), 1, pot_pred_indices = c(2,190),
@@ -202,7 +205,7 @@ values = 0.04868986 + 4.18488448 * x1
 test_that("verify_LRmodel_per_reg works",{
   expect_equal(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model, c(1), 1, 1, 1, reliabilityplot = FALSE)[4],brier((testthat_dfLR$y1 > 1),(exp(values) / (1+exp(values))), bins = FALSE)$bs, 1e-3)
   expect_equal(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model2, c(1), 1, 1, 1, reliabilityplot = FALSE)[4],fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),
-                                                                                                                                                                                                                                           thres = 1, maxstepsAIC = 2, print_conf = FALSE)$brier[[8]], 1e-3)
+                                                                                                                                                        thres = 1, maxstepsAIC = 2, print_conf = FALSE)$brier[[8]], 1e-3)
   expect_warning(verify_LRmodel_per_reg(train_j, train_j, test_model2, c(1), 1, 1, 1, reliabilityplot = FALSE)[4])
   expect_error(verify_LRmodel_per_reg(testthat_dfLR, testthat_dfLR, test_model2, c(1),  38, 1, 1, reliabilityplot = FALSE))
 
