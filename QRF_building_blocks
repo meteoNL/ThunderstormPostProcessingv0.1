@@ -143,4 +143,3 @@ for (y in years){
 #t1 = data.frame(fullt1)
 #tree1 <- tree(data = t1)
 #plot(tree1)
-
