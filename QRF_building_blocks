@@ -9,9 +9,10 @@ library(ggplot2)
 library(tree)
 
 #hyperparameters
-numbtree = 500
-m = 10
-min_length = 4
+numbtree = 250
+m = 2
+min_length = 2
+node_size = 50
 
 # import the data frame and generate training and testing set
 ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
@@ -21,10 +22,19 @@ years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = c(unique(ObsPV$validtime))[2]
 regions = c(unique(ObsPV$region))
-thresholds = exp(seq(0,5)/3)
+th = exp(seq(0,5)/3)
 climset = filter(ObsPV, validtime == VT & leadtime_count == LT)
-varindex = seq(16,29)
-predictant_ind = 5
+orig_varindex = seq(16, length(climset))
+predictant_ind = 6
+
+#verify_qrf_per_reg <- function(fit, test_set, predictant, reg_set, npredictors, numbertrees, mval, nsize){
+ # for(reg in reg_set){
+#    observed_subset = filter(test_set, region = reg)
+#    observed = observed_subset[predictant]
+#    qrf_pred <- predict(qrf_fit, data.frame(test_q[, pot_preds]), what = ecdf)
+#    brier_score = brier(as.numeric(qrf_pred > thres), )
+#  }
+#}
 #varindex = seq(16,length(climset)) #indices of potential predictors
 
 # ## in this data frames we have:
@@ -49,43 +59,48 @@ overall_scores = data.frame()
 
 q = 1
 for (y in years){
-  train_y = filter(climset, year != y)
-  test_y = filter(climset, year == y)
+  train_y = filter(climset, Year != y)
+  test_y = filter(climset, Year == y)
   set.seed(seq(years)[q])
-  randomsubset = round(runif(nrow(train))*numsubset+0.5)
-  train_sub = cbind(train,subset = randomsubset)
+  randomsubset = round(runif(nrow(train_y))*numbsubset+0.5)
+  train_sub = cbind(train_y,subset = randomsubset)
   j = 1
   for (w in seq(numbsubset)){
+    print(y)
     train_q = filter(train_sub, subset != w)
     test_q = filter(train_sub, subset == w)
+    print(train_q)
+    varindex = orig_varindex
 
-    while (length(train[varindex])>min_length){
+    while (length(train_q[varindex])>min_length){
       #predictors still in
       pot_preds <- names(train_q[varindex])
       #do a fit
-      qrf_fit <- quantregForest(x = data.frame(train_q[, pot_preds]), y = unlist(train_q[, "radarmax"]),ntree=numbtree, mtry = m)
+      qrf_fit <- quantregForest(x = data.frame(train_q[varindex]), y = unlist(train_q[predictant_ind]),ntree=numbtree, mtry = m, nodesize = node_size)
+      plot(qrf_fit)
 
       #remove variable
       remove_variable = varindex[qrf_fit$importance == min(qrf_fit$importance)][1]
-      varindex = varindex[varindex!=remove_variable]
+      varindex = varindex[varindex != remove_variable]
 
       #make prediction for thresholds
       qrf_pred <- predict(qrf_fit, data.frame(test_q[, pot_preds]), what = ecdf)
-      plot(qrf_fit)
       qrf_probs <- do.call(rbind, lapply(th, function(t) {
-        data.frame(th = t, prob = unlist(lapply(qrf_pred, function(nr) 1-nr(t))), binobs = unlist(test[, "radarmax"]) > t)
+        data.frame(th = t, prob = unlist(lapply(qrf_pred, function(nr) 1-nr(t))), binobs = unlist(test_q[predictant_ind]) > t, reg = test_q["region"])
       }))
 
       #evaluate
-      qrf_bs <- qrf_probs %>% group_by(th) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
+      qrf_bs <- qrf_probs %>% group_by(th, region) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
       print(length(varindex))
       print(qrf_bs)
-      brierscore = data.frame(j,matrix(qrf_bs$bs, ncol = length(th)+1))
+      brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = w, nodesize = node_size, mtry = m, test_year = y, npredictors = length(varindex))
       overall_scores = rbind(overall_scores, brierscore)
       j = j+1
+      print(q)
+      print(j)
     }
   }
-q = q + 1
+  q = q + 1
 }
   # fit a QRF that predicts radar data from a set of potential predictors
   #pot_preds <- names(train[varindex])
