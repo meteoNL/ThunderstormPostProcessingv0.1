@@ -10,7 +10,7 @@ library(tree)
 
 #hyperparameters
 numbtree = 250
-m_settings = c(2, 6)#c(2, 6, 18)
+m_settings = c(2, 4, 6)
 min_length = 2
 node_size_settings = c(9, 27, 81)#50
 
@@ -58,10 +58,10 @@ remove_variable = c()
 overall_scores = data.frame()
 
 for (node_size in node_size_settings){
-  print("node size equals")
+  print("node size equals: ")
   print(node_size)
   for (m in m_settings){
-    print("m equals:")
+    print("m equals: ")
     print(m)
     q = 1
     for (y in years){
@@ -115,6 +115,28 @@ plot(data.frame(overall_scores$X1, overall_scores$nodesize))
 plot(data.frame(overall_scores$X3, overall_scores$nodesize))
 plot(data.frame(overall_scores$X5, overall_scores$nodesize))
 
+quantiles_frame = data.frame()
+for (m in m_settings){
+  for (node_size in node_size_settings){
+    for (threshold in seq(th)){
+      for (npredictorsval in unique(c(overall_scores$npredictors))){
+        print("threshold index equals:")
+        print(threshold)
+        print("m equals:")
+        print(m)
+        print("node size equals:")
+        print(node_size)
+        print("number of predictors equals:")
+        print(npredictorsval)
+        subset <- filter(overall_scores, mtry == m & nodesize == node_size & npredictors == npredictorsval)
+        retrieve_q = subset[threshold]
+        values = quantile(retrieve_q, c(0.1, 0.25, 0.5, 0.75, 0.9))
+        print(data.frame(values, m, th[threshold], node_size))
+        rbind(data.frame(values, m, th[threshold], node_size), quantiles_frame)
+      }
+    }
+  }
+}
   # fit a QRF that predicts radar data from a set of potential predictors
   #pot_preds <- names(train[varindex])
   #qrf_fit <- quantregForest(x = data.frame(train[, pot_preds]), y = unlist(train[, "radarmax"]),ntree=numbtree, mtry = m)
