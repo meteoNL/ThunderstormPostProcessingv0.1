@@ -187,6 +187,10 @@ test_that("Function fit_logitModels_and_predict",{
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24],
                fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[1]][1:24]) ## at index 25, the data frame used for fitting is in the result; these should be different
+  expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = seq(2,5),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[2]][1:24],
+               fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
+                                           thres = threshold, maxstepsAIC = 2, print_conf = FALSE)[[1]][[2]][1:24]) ## at index 25, the data frame used for fitting is in the result; these should be different
   expect_equal(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,5),
                                            thres = threshold, maxstepsAIC = 3, print_conf = FALSE),"Failed") ## at index 25, the data frame used for fitting is in the result; these should be different
   expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(1), 1, pot_pred_indices = c(2,190),
