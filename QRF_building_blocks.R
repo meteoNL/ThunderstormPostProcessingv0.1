@@ -110,6 +110,11 @@ for (node_size in node_size_settings){
     }
   }
 }
+write.csv(overall_scores, file = "overall scores.csv")
+plot(data.frame(overall_scores$X1, overall_scores$nodesize))
+plot(data.frame(overall_scores$X3, overall_scores$nodesize))
+plot(data.frame(overall_scores$X5, overall_scores$nodesize))
+
   # fit a QRF that predicts radar data from a set of potential predictors
   #pot_preds <- names(train[varindex])
   #qrf_fit <- quantregForest(x = data.frame(train[, pot_preds]), y = unlist(train[, "radarmax"]),ntree=numbtree, mtry = m)
