@@ -32,6 +32,8 @@ years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = c(unique(ObsPV$validtime))[2]
 regions = c(unique(ObsPV$region))#[1:2]
+
+#change radarmax into other name if necessary:
 climset = filter(ObsPV, radarmax > minpredictant & validtime == VT & leadtime_count == LT)
 
 #do transformations for thresholds
