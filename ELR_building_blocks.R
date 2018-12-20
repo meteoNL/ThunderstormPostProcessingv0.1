@@ -3,6 +3,14 @@
 #For now, sample climatology is used!!!#
 ########################################
 
+
+#######
+
+
+#THIS IS STILL USING COMPLEMENTARY PROBABILITIES P_y=0 = (1-P_y=1)
+
+#######
+
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
@@ -230,11 +238,7 @@ test_that("Testing function fit_test_all_pot_pred",{
   expect_error(fit_test_all_pot_pred(train_j, 450, 28, thres, used_preds = 30))
 })
 
-test_that("Testing function verify_ELRmodel_per_reg: Brier scores of probabilities between 0.0 and 0.5 and error expectation ",{
-           # expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0)
-           # expect_gt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0)
-           # expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[5],0.5)
-           # expect_lt(verify_ELRmodel_per_reg(testthat_df, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6],0.5)
+test_that("Testing function verify_ELRmodel_per_reg: error expectation ",{
             expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], regions, 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
             })
 
