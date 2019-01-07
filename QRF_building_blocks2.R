@@ -95,7 +95,7 @@ for (y in years){
             data.frame(th = t, prob = unlist(lapply(qrf_pred, function(nr) 1-nr(t))), binobs = unlist(test_q[predictant_ind]) > t, reg = test_q["region"])
           }))
 
-          #evaluate
+          #evaluate brier score and add to data frame
           qrf_bs <- qrf_probs %>% group_by(th, region) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
           print(length(varindex))
           print(qrf_bs)
@@ -110,6 +110,7 @@ for (y in years){
   }
   q = q + 1
 }
+#this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 write.csv(overall_scores, file = "overall scores.csv")
 plot(data.frame(overall_scores$X1, overall_scores$nodesize))
 plot(data.frame(overall_scores$X3, overall_scores$nodesize))
@@ -138,6 +139,8 @@ for (m in m_settings){
     }
   }
 }
+
+#this dataframe contains all brier scores per hyperparameter setting and per threshold as quantiles
 write.csv(quantiles_frame, file = "quantiles frame.csv")
 
 set.seed(712)
