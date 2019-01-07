@@ -80,7 +80,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     qrf_bs <- qrf_probs %>% group_by(th, region) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
     print(length(varindex))
     print(qrf_bs)
-    brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindex))
+    brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
     overall_scores_local = rbind(overall_scores_local, brierscore)
     print(q)
   }
@@ -176,6 +176,12 @@ test_that("Random subset numbers",{
   expect_equal(max(randomsubset),3)
 })
 
+overall_scores = read.csv("overall scores.csv")
+overall_scores_old = read.csv("overall scores_old.csv")
+
+test_that("test similarity",{
+  expect_equal(overall_scores, overall_scores_old)
+})
 # fit a QRF that predicts radar data from a set of potential predictors
 #pot_preds <- names(train[varindex])
 #qrf_fit <- quantregForest(x = data.frame(train[, pot_preds]), y = unlist(train[, "radarmax"]),ntree=numbtree, mtry = m)
