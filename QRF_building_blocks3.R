@@ -176,12 +176,6 @@ test_that("Random subset numbers",{
   expect_equal(max(randomsubset),3)
 })
 
-overall_scores = read.csv("overall scores.csv")
-overall_scores_old = read.csv("overall scores_old.csv")
-
-test_that("test similarity",{
-  expect_equal(overall_scores, overall_scores_old)
-})
 # fit a QRF that predicts radar data from a set of potential predictors
 #pot_preds <- names(train[varindex])
 #qrf_fit <- quantregForest(x = data.frame(train[, pot_preds]), y = unlist(train[, "radarmax"]),ntree=numbtree, mtry = m)
