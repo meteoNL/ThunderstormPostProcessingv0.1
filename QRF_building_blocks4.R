@@ -28,33 +28,6 @@ climset = filter(ObsPV, validtime == VT & leadtime_count == LT)
 orig_varindex = seq(16,25)#seq(16, length(climset))
 predictant_ind = 6
 
-#verify_qrf_per_reg <- function(fit, test_set, predictant, reg_set, npredictors, numbertrees, mval, nsize){
-# for(reg in reg_set){
-#    observed_subset = filter(test_set, region = reg)
-#    observed = observed_subset[predictant]
-#    qrf_pred <- predict(qrf_fit, data.frame(test_q[, pot_preds]), what = ecdf)
-#    brier_score = brier(as.numeric(qrf_pred > thres), )
-#  }
-#}
-#varindex = seq(16,length(climset)) #indices of potential predictors
-
-# ## in this data frames we have:
-# region = 2:12
-# Year = 2010, 2011, 2013
-# Month = 04:10
-# Day = 1:31
-# validtime = "VT_0612" "VT_1218" "VT_1800" "VT_0006"
-# radarmax = the radar observation
-# validdate
-# T0 = initialization time
-# leadtime = how many hours lead time
-# leadtime_count 1:7
-# init = initialization of the model
-# vt_start = start of the verification time
-# vt_end = end of the verification time
-# LT_start = start of the lead time
-# LT_end = end of the lead time
-# Columns 17-99 are the potential predictor variables. maximum and minimum values of each predictor.
 remove_variable = c()
 overall_scores = data.frame()
 
@@ -207,44 +180,3 @@ test_that("Random subset numbers",{
 })
 
 
-# fit a QRF that predicts radar data from a set of potential predictors
-#pot_preds <- names(train[varindex])
-#qrf_fit <- quantregForest(x = data.frame(train[, pot_preds]), y = unlist(train[, "radarmax"]),ntree=numbtree, mtry = m)
-
-# predict the ECDF for each day in the test data set
-#qrf_pred <- predict(qrf_fit, data.frame(test[, pot_preds]), what = ecdf)
-#plot(qrf_fit)
-# make probabilitys of exceeding a set of thresholds:
-#th = seq(1, 15, 2)
-#qrf_probs <- do.call(rbind, lapply(th, function(t) {
-#  data.frame(th = t, prob = unlist(lapply(qrf_pred, function(nr) 1-nr(t))), binobs = unlist(test[, "radarmax"]) > t)
-#}))
-# calculate the BS for each thrshold
-#qrf_bs <- qrf_probs %>% group_by(th) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
-
-# make a plot
-#print(ggplot(data = qrf_bs) +
-#       geom_point(aes(x = th, y = bs)) +
-#        theme_bw() + ylim(0, 0.2) +
-#         xlab("threshold"))
-# dev.off()
-
-#for(i in seq(1,length(th))){
-# plot(data.frame(overall_scores[1], overall_scores[i+1]), type = "o", main = paste("Threshold in mm/h: ", th[i]))
-#}
-
-#show splits
-#alltrees = data.frame(getTree(qrf_fit,1))
-#for(i in seq(2,numbtree)){
-#  fulltree = data.frame(getTree(qrf_fit, i))
-#  alltrees = rbind(alltrees, fulltree)
-#}
-#varnames = names(qrf_fit$forest$xlevels)
-#for (i in seq(1,length(varnames))){
-#  variable_splits <- filter(alltrees,split.var == i)
-#  plot(variable_splits$split.point, variable_splits$prediction, main = varnames[i])
-#}
-#fullt1 = getTree(qrf_fit, 1)
-#t1 = data.frame(fullt1)
-#tree1 <- tree(data = t1)
-#plot(tree1)
