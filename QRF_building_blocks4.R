@@ -96,9 +96,9 @@ for (y in years){
 }
 #this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 write.csv(overall_scores, file = "overall scores.csv")
-plot(data.frame(overall_scores$X1, overall_scores$nodesize))
-plot(data.frame(overall_scores$X3, overall_scores$nodesize))
-plot(data.frame(overall_scores$X5, overall_scores$nodesize))
+#plot(data.frame(overall_scores$X1, overall_scores$nodesize))
+#plot(data.frame(overall_scores$X3, overall_scores$nodesize))
+#plot(data.frame(overall_scores$X5, overall_scores$nodesize))
 
 quantiles_frame = data.frame()
 for (m in m_settings){
@@ -149,6 +149,10 @@ for (m in m_settings){
 #this dataframe contains all brier scores per hyperparameter setting and per threshold as quantiles
 write.csv(quantiles_frame, file = "quantiles frame.csv")
 write.csv(quantiles_frame_crps, file = "quantiles frame with crps.csv")
+
+#-----------------------------------------------------------------
+## Testing the functions
+                 
 set.seed(712)
 x1 = rnorm(1000,0,5)
 x2 = rnorm(1000,0,5)
@@ -156,10 +160,6 @@ x3 = rnorm(1000,0,5)
 pert = rnorm(1000,0,5)
 y = x1*25+x2*100+pert
 test_df = data.frame(x1, x2, x3, y)
-
-
-#-----------------------------------------------------------------
-## Testing the functions
 library(devtools)
 library(testthat)
 usethis::use_testthat()
