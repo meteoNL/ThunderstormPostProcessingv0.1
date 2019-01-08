@@ -151,9 +151,31 @@ for (m in m_settings){
   }
 }
 
+quantiles_frame_crps = data.frame()
+for (m in m_settings){
+  for (node_size in node_size_settings){
+    for (npredictorsval in unique(c(overall_scores$npredictors))){
+      print("threshold index equals:")
+      print(threshold)
+      print("m equals:")
+      print(m)
+      print("node size equals:")
+      print(node_size)
+      print("number of predictors equals:")
+      print(npredictorsval)
+      subset <- filter(overall_scores, mtry == m & nodesize == node_size & npredictors == npredictorsval)
+      retrieve_q = subset$mean.crpsscore.
+      retrieve_q = unlist(c(retrieve_q))
+      values = c(mean(retrieve_q), min(retrieve_q), max(retrieve_q))
+      print(data.frame(values, m, node_size))
+      quantiles_frame_crps = rbind(data.frame(mean = values[1], min = values[2], max = values[3], m, node_size, npredictorsval), quantiles_frame_crps)
+    }
+  }
+}
+
 #this dataframe contains all brier scores per hyperparameter setting and per threshold as quantiles
 write.csv(quantiles_frame, file = "quantiles frame.csv")
-
+write.csv(quantiles_frame_crps, file = "quantiles frame with crps.csv")
 set.seed(712)
 x1 = rnorm(1000,0,5)
 x2 = rnorm(1000,0,5)
