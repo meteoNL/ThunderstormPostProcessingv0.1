@@ -160,8 +160,8 @@ test_df = data.frame(x1, x2, x3, y)
 library(devtools)
 library(testthat)
 usethis::use_testthat()
-qrf_fit <- quantregForest(x = data.frame(test_df[seq(1,3)]), y = unlist(test_df["y"]), ntree=numbtree, mtry = 1, nodesize = 5)
-importance_table = qrf_fit$importance
+qrf_fit_test <- quantregForest(x = data.frame(test_df[seq(1,3)]), y = unlist(test_df["y"]), ntree=numbtree, mtry = 1, nodesize = 5)
+importance_table = qrf_fit_test$importance
 test_that("Predictor ranking of dataset",{
   expect_gt(importance_table[2],importance_table[1])
   expect_gt(importance_table[1],importance_table[3])
@@ -175,6 +175,7 @@ test_that("Random subset numbers",{
   expect_equal(min(randomsubset),1)
   expect_equal(max(randomsubset),3)
 })
+
 
 # fit a QRF that predicts radar data from a set of potential predictors
 #pot_preds <- names(train[varindex])
