@@ -151,7 +151,7 @@ write.csv(quantiles_frame, file = "quantiles frame.csv")
 write.csv(quantiles_frame_crps, file = "quantiles frame with crps.csv")
 
 #-----------------------------------------------------------------
-## Testing the functions
+## Testing the functions (partly, as many functions are from other libraries and previous code)
                  
 set.seed(712)
 x1 = rnorm(1000,0,5)
