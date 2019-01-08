@@ -80,14 +80,15 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     #evaluate continuous ranked probability score
     qrf_pred_quan = predict(qrf_fit, data.frame(test_set[, pot_preds]), what = seq(0.05,0.95,0.1))
     Crps_samples = EnsCrps(qrf_pred_quan, unlist(test_set[predictant_index]))
-    CRPS_score_mean <- Crps_samples %>% group_by(region) %>% mean(Crps_samples)
+    df_with_crpsscore = data.frame(test_set, crpsscore = Crps_samples)
+    CRPS_score_mean <- df_with_crpsscore %>% group_by(region) %>% summarise(mean(crpsscore))
     print(CRPS_score_mean)
 
     #evaluate brier score and add to data frame
     qrf_bs <- qrf_probs %>% group_by(th, region) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
     print(length(varindex))
     print(qrf_bs)
-    brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
+    brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), region2 = CRPS_score_mean[1], crpsscore = CRPS_score_mean[2], testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
     overall_scores_local = rbind(overall_scores_local, brierscore)
     print(q)
   }
