@@ -13,7 +13,7 @@ library(SpecsVerification)
 numbtree = 250
 m_settings = c(2, 6, 18)
 min_length = 2
-node_size_settings = c(9, 27, 81)#50
+node_size_settings = c(3, 9, 27)#50
 
 # import the data frame and generate training and testing set
 ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
