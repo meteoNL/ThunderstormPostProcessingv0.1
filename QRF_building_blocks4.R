@@ -59,7 +59,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
 
     #evaluate brier score and add to data frame
     qrf_bs <- qrf_probs %>% group_by(th, region) %>% summarise(bs = brier(obs = binobs, pred = prob, bins = FALSE)$bs)
-    print(length(varindex))
+    print(length(varindexset))
     print(qrf_bs)
     brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), crpsscore = CRPS_score_mean[2], testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
     overall_scores_local = rbind(overall_scores_local, brierscore)
