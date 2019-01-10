@@ -25,7 +25,7 @@ VT = c(unique(ObsPV$validtime))[2]
 regions = c(unique(ObsPV$region))
 th = exp(seq(0,5)/3)
 climset = filter(ObsPV, validtime == VT & leadtime_count == LT)
-orig_varindex = seq(16,25)#seq(16, length(climset))
+orig_varindex = seq(16, length(climset))
 predictant_ind = 6
 
 remove_variable = c()
@@ -77,6 +77,7 @@ for (y in years){
   train_sub = cbind(train_y, subset = randomsubset)
   for (w in seq(numbsubset)){
     print(y)
+    print(w)
     train_q = filter(train_sub, subset != w)
     test_q = filter(train_sub, subset == w)
     print(train_q)
@@ -89,6 +90,7 @@ for (y in years){
         varindex = orig_varindex
         brierscore = qrf_procedure(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
         overall_scores = rbind(overall_scores, brierscore)
+
       }
     }
   }
@@ -128,8 +130,6 @@ quantiles_frame_crps = data.frame()
 for (m in m_settings){
   for (node_size in node_size_settings){
     for (npredictorsval in unique(c(overall_scores$npredictors))){
-      print("threshold index equals:")
-      print(threshold)
       print("m equals:")
       print(m)
       print("node size equals:")
@@ -151,19 +151,19 @@ write.csv(quantiles_frame, file = "quantiles frame.csv")
 write.csv(quantiles_frame_crps, file = "quantiles frame with crps.csv")
 
 #-----------------------------------------------------------------
-## Testing the functions (partly, as many functions are from other libraries and previous code)
-                 
+## Testing the functions
+
 set.seed(712)
 x1 = rnorm(1000,0,5)
 x2 = rnorm(1000,0,5)
 x3 = rnorm(1000,0,5)
 pert = rnorm(1000,0,5)
-y = x1*25+x2*100+pert
-test_df = data.frame(x1, x2, x3, y)
+yvalues = x1*25+x2*100+pert
+test_df = data.frame(x1, x2, x3, yvalues)
 library(devtools)
 library(testthat)
 usethis::use_testthat()
-qrf_fit_test <- quantregForest(x = data.frame(test_df[seq(1,3)]), y = unlist(test_df["y"]), ntree=numbtree, mtry = 1, nodesize = 5)
+qrf_fit_test <- quantregForest(x = data.frame(test_df[seq(1,3)]), y = unlist(test_df["yvalues"]), ntree=numbtree, mtry = 1, nodesize = 5)
 importance_table = qrf_fit_test$importance
 test_that("Predictor ranking of dataset",{
   expect_gt(importance_table[2],importance_table[1])
@@ -178,5 +178,4 @@ test_that("Random subset numbers",{
   expect_equal(min(randomsubset),1)
   expect_equal(max(randomsubset),3)
 })
-
 
