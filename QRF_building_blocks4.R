@@ -16,6 +16,7 @@ min_length = 2
 node_size_settings = c(3, 9, 27)#50
 
 # import the data frame and generate training and testing set
+minpdis = 1.5
 ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
 #ObsPV <- filter(ObsPV, region != 1)
 numbsubset = 3
@@ -24,7 +25,7 @@ LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = c(unique(ObsPV$validtime))[2]
 regions = c(unique(ObsPV$region))
 th = exp(seq(0,5)/3)
-climset = filter(ObsPV, validtime == VT & leadtime_count == LT)
+climset = filter(ObsPV, Ndischarges > mindis & validtime == VT & leadtime_count == LT)
 orig_varindex = seq(16, length(climset))
 predictant_ind = 6
 
