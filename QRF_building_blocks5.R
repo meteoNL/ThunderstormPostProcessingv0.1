@@ -20,14 +20,14 @@ minpredictant = 1.5 #1.5 discharges
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 #ObsPV <- filter(ObsPV, region != 1)
 numbsubset = 3
-years = c(as.numeric(unique(ObsPV$Year)))
+years = c(as.numeric(unique(ObsPV$Year.x)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
-VT = c(unique(ObsPV$validtime))[2]
-regions = c(unique(ObsPV$region))
+VT = unique(ObsPV$validtime.x)[2]
+regions = c(unique(ObsPV$region.x))
 th = exp(seq(0,5)/3)
-climset = filter(ObsPV, radarmax > minpredictant & validtime == VT & leadtime_count == LT)
-orig_varindex = c(seq(15,length(climset)))
-predictant_ind = 6
+climset <- filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtime_count == LT)
+orig_varindex = c(seq(16,100))
+predictant_ind = 113
 
 remove_variable = c()
 overall_scores = data.frame()
