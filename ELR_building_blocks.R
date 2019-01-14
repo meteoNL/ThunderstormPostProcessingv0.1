@@ -43,7 +43,7 @@ thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
 #set available variables & predictant
-varindex=seq(18,65)
+varindex=c(seq(18,71),seq(91,101))
 pot_preds=names(climset[varindex])
 ind_predictant = 113
 
