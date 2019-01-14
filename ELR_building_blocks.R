@@ -21,36 +21,36 @@ library(profvis)
 #rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
-p = 0.1 #power transformation to linearize thresholds
+p = 1.0 #power transformation to linearize thresholds
 maxvars = 4
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = (0.3*exp(seq(0,2)/2)) #precipitation thresholds used for "g(q)"
-thres_eval = 15.0 * thres[1] #precipitation threshold for evaluation
-minpredictant = 0.1 #minimum precipitation sum considered as precipitation
-ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
+thres = c(5,15,50)
+thres_eval = 30 #precipitation threshold for evaluation
+minpredictant = 1.5 #minimum precipitation sum considered as precipitation
+ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
-VT = c(unique(ObsPV$validtime))[2]
+VT = unique(ObsPV$validtime.x)[2]
 regions = c(unique(ObsPV$region))#[1:2]
 
 #change radarmax into other name if necessary:
-climset = filter(ObsPV, radarmax > minpredictant & validtime == VT & leadtime_count == LT)
+climset = filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtime_count == LT)
 
 #do transformations for thresholds
-climset$radarmax = climset$radarmax^p
+climset$Dischargerate = climset$Dischargerate^p
 thres = thres^p
 thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
 #set available variables & predictant
-varindex=seq(16,99)
+varindex=seq(18,65)
 pot_preds=names(climset[varindex])
-ind_predictant = 6
+ind_predictant = 113
 
 ##
 #transformations Richardson numbers (otherwise this script for now protests; more transformations will be done in different script)
 cnst_RItrans = 1e-5
-RIindex=c(seq(34,35),seq(76,77))
+RIindex=c(seq(36,37),seq(78,79))
 climset[RIindex] = log(cnst_RItrans+climset[RIindex])
 plot(climset[RIindex])
 ##
@@ -129,12 +129,12 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     n_variables = append(n_variables, length(variables))
   }
 
-  #select model and apply verification result with verification model per region function
+  #select model and apply verification result with verification model per region
   for (i in seq(modellist)){
     model_ver = modellist[[i]]
     n_variables_i = n_variables[i]
 
-    for(j in seq(test_thresholds)){
+    for(j in seq(length(test_thresholds))){
       test_threshold = test_thresholds[j]
       briers = append(briers, verify_ELRmodel_per_reg(test_set, model_ver, regions, predictant, test_threshold, n_variables_i, reliabilityplot = TRUE))
 
@@ -171,6 +171,7 @@ for(y in years){
     #find a fit
     result = fit_extended_logitModels(train_j, test_j, predictant = ind_predictant, pot_pred_indices = varindex,
                                       train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
+   # print(result$briers)
 
     #put results in dataframes and vectors
     brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),6)],
@@ -187,6 +188,7 @@ for(y in years){
 
 for(y in years){
   test_fin = filter(climset, Year == y)
+  train_fin = filter(climset, Year != y)
   result = fit_extended_logitModels(train_fin, test_fin, predictant = ind_predictant, pot_pred_indices = varindex,
                                     train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
   brierdataframe = rbind(brierdataframe, data.frame(test_year = (result$briers)[seq(1,length(result$briers),6)],
@@ -219,13 +221,13 @@ test_that("Test resulting brier data frame for obvious errors",{
   expect_equal(rep(regions,length(brierdataframe$region)/(length(regions))), brierdataframe$region)
 })
 test_that("Test dataset and potential predictors complete?", {
-  expect_equal(climset, rbind(train_fin, test_fin))
+  expect_equal(climset %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
   expect_equal(length(pot_preds), length(varindex))
 })
 test_that("Transformation with power p - check", {
-  expect_equal(c(climset[ind_predictant]^(1/p)),c(filter(ObsPV, radarmax > minpredictant & validtime == VT &
+  expect_equal(c(climset[ind_predictant]^(1/p)),c(filter(ObsPV, Ndischarge > minpredictant & validtime == VT &
                                                            leadtime_count == LT)[ind_predictant]))
-  expect_gte(min(climset[ind_predictant]^(1/p)),minpredictant)
+  expect_gte(min(climset[ind_predictant]^(1/p)),1)
 })
 
 y = years[1]
@@ -234,10 +236,10 @@ testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), 
 thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
 model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
 test_that("Testing function fit_test_all_pot_pred",{
-  expect_equal(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 30), 28)
-  expect_error(fit_test_all_pot_pred(train_j, 6, 28, thres, used_preds = 28))
-  expect_error(fit_test_all_pot_pred(train_j, 28, 28, thres, used_preds = 30))
-  expect_error(fit_test_all_pot_pred(train_j, 450, 28, thres, used_preds = 30))
+  expect_equal(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 32), 30)
+  expect_error(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 30))
+  expect_error(fit_test_all_pot_pred(train_j, 30, 30, thres, used_preds = 32))
+  expect_error(fit_test_all_pot_pred(train_j, 450, 30, thres, used_preds = 32))
 })
 
 test_that("Testing function verify_ELRmodel_per_reg: error expectation ",{
