@@ -3,7 +3,7 @@
 #For now, sample climatology is used!!!#
 ########################################
 
-#rm(list=ls(all=TRUE))
+rm(list=ls(all=TRUE))
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
@@ -14,17 +14,17 @@ usethis::use_testthat()
 
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #read dataset
-ObsPV = readRDS(file = "/usr/people/whan/Research/Whanetal_HarmoniePr_2017/data/ObsPV.rds")
+ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
-VT = c(unique(ObsPV$validtime))[2]
+VT = unique(ObsPV$validtime)[2]
 regions = c(unique(ObsPV$region))
-threshold = 3.00
+threshold = 1.50
 
 #set default available variables: predictant and predictor
 numsubset = 3 #number of subsets for hyperparametersetting
-ind_predictant = 6
-varindex=seq(16,99)
+ind_predictant = 107
+varindex=seq(18,101)
 pot_preds=names(ObsPV[varindex])
 ndec = 4
 maxsteps = 6
@@ -106,7 +106,7 @@ q = 1
 for(y in years){
 
   #create random subsets to train on
-  train = filter(ObsPV, Year != y & validtime == VT & leadtime_count == LT)
+  train = filter(ObsPV, Year.x != y & validtime.x == VT & leadtime_count == LT)
   set.seed(seq(years)[q])
   randomsubset = round(runif(nrow(train))*numsubset+0.5)
   train_sub = cbind(train,subset = randomsubset)
@@ -143,8 +143,8 @@ matplot(scores, type = "o", xlab = "Number of predictors (-)", ylab = "Brier sco
 plot(meanscores, xlab = "Number of predictors (-)", ylab = "Mean brier score (-)")
 
 for(y in years){
-  train_fin = filter(ObsPV, Year != y & validtime == VT & leadtime_count == LT)
-  test_fin = filter(ObsPV, Year == y & validtime == VT & leadtime_count == LT)
+  train_fin = filter(ObsPV, Year.x != y & validtime.x == VT & leadtime_count == LT)
+  test_fin = filter(ObsPV, Year.x == y & validtime.x == VT & leadtime_count == LT)
   result = fit_logitModels_and_predict(train_set = train_fin, test_set = test_fin,
                                        predictant = ind_predictant, pot_pred_indices = varindex,
                                        thres = 3.00, maxstepsAIC = maxsteps, print_conf = FALSE)
@@ -158,7 +158,7 @@ for(y in years){
 
 # --------------------------------------------------
 test_that("Test dataset complete?", {
-  expect_equal(filter(ObsPV, validtime == VT & leadtime_count == LT), rbind(train_fin, test_fin))
+  expect_equal(filter(ObsPV, validtime.x == VT & leadtime_count == LT) %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
 })
 
 test_that("Test resulting brier data frame for obvious errors",{
@@ -197,7 +197,7 @@ test_that("Function fit_logitModels_and_predict",{
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
   expect_error(fit_logitModels_and_predict(testthat_dfLR, testthat_dfLR, region_set = c(3), 1, pot_pred_indices = c(2,190),
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
-  expect_error(fit_logitModels_and_predict(train_j, testthat_dfLR, region_set = c(3), 1, pot_pred_indices = c(2,5),
+  expect_error(fit_logitModels_and_predict(train_j[18,20], testthat_dfLR, region_set = c(3), 25, pot_pred_indices = c(2,5),
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE))
   expect_equal(fit_logitModels_and_predict(testthat_dfLR, train_j, region_set = c(3), 1, pot_pred_indices = c(2,5),
                                            thres = threshold, maxstepsAIC = 2, print_conf = FALSE),"Failed") #wrong verification dataframe
