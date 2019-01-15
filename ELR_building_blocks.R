@@ -21,11 +21,11 @@ library(profvis)
 #rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
-p = 0.2 #power transformation to linearize thresholds
+p = 0.3 #power transformation to linearize thresholds
 maxvars = 4
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = c(5,15,25)
-thres_eval = 30 #precipitation threshold for evaluation
+thres = c(5,15,50)
+thres_eval = 20 #precipitation threshold for evaluation
 minpredictant = 1.5 #minimum precipitation sum considered as precipitation
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 years = c(as.numeric(unique(ObsPV$Year)))
