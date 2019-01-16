@@ -28,11 +28,13 @@ th = exp(seq(0,5)/3)
 climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT)
 occurence = as.numeric(climset[107]>minpredictant)
 climset = data.frame(climset, occurence)
-orig_varindex = c(seq(18,50),seq(52,101))
+orig_varindex = c(seq(18,101))
 predictant_ind = 114
 
 remove_variable = c()
 overall_scores = data.frame()
+
+
 
 qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
   overall_scores_local = data.frame()
@@ -43,6 +45,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     qrf_fit <- quantregForest(x = data.frame(train_set[varindexset]), y = unlist(train_set[predictant_index]), ntree = ntree_hyp, mtry = m_hyp, nodesize = node_size_hyp)
     #plot(qrf_fit)
 
+    saveRDS(qrf_fit,"Latest_fit")
     write.csv(list(qrf_fit$importance,m_hyp,ntree_hyp,node_size_hyp,wval,yval), "fit_importance3.csv")
     write.csv(train_set,"train_set3.csv")
     write.csv(test_set,"test_set3.csv")
