@@ -33,7 +33,6 @@ predictant_ind = 113
 remove_variable = c()
 overall_scores = data.frame()
 overall_scores_quan = data.frame()
-h=0
 
 qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
   overall_scores_local = data.frame()
@@ -43,19 +42,19 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     #predictors still in
     pot_preds <- names(train_set[varindexset])
     predictant <- names(train_set[predictant_index])
-    
+
     #assign the variables and formula for the fit and do a fit
     formul = train_set[predictant]~.
     assign("train_set", train_set, .GlobalEnv)
     assign("predictant", predictant, .GlobalEnv)
     fit1=ranger(formul, data = data.frame(train_set[c(pot_preds)]), num.trees = ntree_hyp, mtry = min(m_hyp, length(varindexset)), min.node.size = node_size_hyp, importance = "impurity", quantreg = TRUE)    #plot(qrf_fit)
-    
+
     #remove variable
     remove_variable = varindexset[fit1$variable.importance == min(fit1$variable.importance)][1]
     varindexset = varindexset[varindexset != remove_variable]
     print("removed variable:")
     print(remove_variable)
-    
+
     #evaluate continuous ranked probability score
     qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(5,95,10)/100)$predictions
     qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
@@ -108,9 +107,9 @@ for (y in years){
 #this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv")
-qrf_ss <- overall_scores %>% group_by(npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$ss)
-qrf_bs <- overall_scores %>% group_by(npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
-qrf_crps = overall_scores_quan %>% group_by(region, npred, mtry, nodesize, min_n_size) %>% summarise(crps = mean(EnsCrps(qrf_pred_quan[1:10],qrf_pred_quan[11])))
+#qrf_ss <- overall_scores %>% group_by(npred, mtry, min_n_size) %>% summarise(bs = brier(obs = Dischargerate, pred = prob, bins = FALSE)$ss)
+#qrf_bs <- overall_scores %>% group_by(npred, mtry, min_n_size) %>% summarise(bs = brier(obs = Dischargerate, pred = prob, bins = FALSE)$bs)
+qrf_crps = overall_scores_quan %>% group_by(region, npred, mtry, min_n_size) %>% summarise(crps = mean(EnsCrps(as.matrix(overall_scores_quan[1:10]),as.numeric(unlist(overall_scores_quan[11])))))
 write.csv(qrf_ss, file="qrf_thresholds_ss.csv")
 write.csv(qrf_bs, file="qrf_thresholds_bs.csv")
 write.csv(qrf_crps, file="qrf_thresholds_crps.csv")
