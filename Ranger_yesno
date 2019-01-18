@@ -70,7 +70,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
   #  overall_scores_local = rbind(overall_scores_local, brierscore)
     rm("predictant", "train_set")
     #print(q)
-    overall_scores_local = data.frame(overall_scores_local, qrf_pred)
+    overall_scores_local = rbind(overall_scores_local, qrf_pred)
   }
   return(overall_scores_local)
 }
@@ -108,7 +108,7 @@ setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv")
 qrf_ss <- overall_scores %>% group_by(region, npred, mtry, nodesize, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$ss)
 qrf_bs <- overall_scores %>% group_by(region, npred, mtry, nodesize, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
-
+write.csv(qrf_ss, file="qrf_ss.csv")
 # quantiles_frame = data.frame()
 # for (m in m_settings){
 #   for (node_size in node_size_settings){
