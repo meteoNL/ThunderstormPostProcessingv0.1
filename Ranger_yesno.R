@@ -25,7 +25,6 @@ years = c(as.numeric(unique(ObsPV$Year.x)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = unique(ObsPV$validtime.x)[2]
 regions = c(unique(ObsPV$region.x))
-th = c(1.5)#exp(seq(0,5)/3)
 climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT)
 occurence = as.numeric(climset[107]>minpredictant)
 climset = data.frame(climset, occurence)
@@ -34,9 +33,6 @@ predictant_ind = 114
 
 remove_variable = c()
 overall_scores = data.frame()
-
-h=0
-
 qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
   overall_scores_local = data.frame()
   while (length(train_set[varindexset])>min_length_setting){
