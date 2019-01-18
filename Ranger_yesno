@@ -62,14 +62,9 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     ######
     fit1_pred = predict(fit1, data = test_set)
     qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
-   
-    #evaluate brier score and add to data frame
-   # qrf_bs <- qrf_pred %>% group_by(region) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
-  #  print(length(varindexset))
-  #  brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
-  #  overall_scores_local = rbind(overall_scores_local, brierscore)
+    
+    #remove globals and collect the data
     rm("predictant", "train_set")
-    #print(q)
     overall_scores_local = rbind(overall_scores_local, qrf_pred)
   }
   return(overall_scores_local)
@@ -97,7 +92,6 @@ for (y in years){
         varindex = orig_varindex
         brierscore = qrf_procedure(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
         overall_scores = rbind(overall_scores, brierscore)
-        
       }
     }
   }
@@ -105,59 +99,10 @@ for (y in years){
 }
 #this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
-#write.csv(overall_scores, file = "overall scores3.csv")
 qrf_ss <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$ss)
 qrf_bs <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
 write.csv(qrf_ss, file="qrf_ss.csv")
 write.csv(qrf_bs, file="qrf_bs.csv")
-# quantiles_frame = data.frame()
-# for (m in m_settings){
-#   for (node_size in node_size_settings){
-#     for (threshold in seq(th)){
-#       for (npredictorsval in unique(c(overall_scores$npredictors))){
-#         #  print("threshold index equals:")
-#         #  print(threshold)
-#         #  print("m equals:")
-#         #  print(m)
-#         #  print("node size equals:")
-#         # print(node_size)
-#         # print("number of predictors equals:")
-#         #print(npredictorsval)
-#         subset <- filter(overall_scores, mtry == m & nodesize == node_size & npredictors == npredictorsval)
-#         retrieve_q = subset[threshold]
-#         retrieve_q = unlist(c(retrieve_q))
-#         values = quantile(retrieve_q, c(0.1, 0.25, 0.5, 0.75, 0.9))
-#         #print(data.frame(values, m, th[threshold], node_size))
-#         quantiles_frame = rbind(data.frame(q0.10 = values[1], q0.25 = values[2], q0.50 = values[3], q0.75 = values[4], q0.90 = values[5], m, th[threshold], node_size, npredictorsval), quantiles_frame)
-#       }
-#     }
-#   }
-# }
-
-quantiles_frame_crps = data.frame()
-# for (m in m_settings){
-#   for (node_size in node_size_settings){
-#     for (npredictorsval in unique(c(overall_scores$npredictors))){
-#       #print("m equals:")
-#       #print(m)
-#       #print("node size equals:")
-#       #print(node_size)
-#       #print("number of predictors equals:")
-#       #print(npredictorsval)
-#       subset <- filter(overall_scores, mtry == m & nodesize == node_size & npredictors == npredictorsval)
-#       retrieve_q = subset$mean.crpsscore.
-#       retrieve_q = unlist(c(retrieve_q))
-#       values = c(mean(retrieve_q), min(retrieve_q), max(retrieve_q))
-#       # print(data.frame(values, m, node_size))
-#       quantiles_frame_crps = rbind(data.frame(mean = values[1], min = values[2], max = values[3], m, node_size, npredictorsval), quantiles_frame_crps)
-#     }
-#   }
-# }
-
-#this dataframe contains all brier scores per hyperparameter setting and per threshold as quantiles
-setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
-write.csv(quantiles_frame, file = "quantiles frame3.csv")
-write.csv(quantiles_frame_crps, file = "quantiles frame with crps3.csv")
 
 #-----------------------------------------------------------------
 ## Testing the functions
