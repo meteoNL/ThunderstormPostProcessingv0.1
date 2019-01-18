@@ -63,7 +63,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     for(threshold in thres_eval){
       fit1_pred_thres = predict(fit1, data = test_set, predict.all = TRUE)
       obs = as.numeric(test_set[predictant_index] > threshold)
-      probs = rowMeans(fit1_pred$predictions>threshold)
+      probs = rowMeans(fit1_pred_thres$predictions>threshold)
       qrf_pred = rbind(qrf_pred_quan, data.frame(probability = probs, observed = obs, region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval))
     }
    # qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
