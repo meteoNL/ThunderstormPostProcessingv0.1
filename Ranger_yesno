@@ -106,9 +106,10 @@ for (y in years){
 #this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv")
-qrf_ss <- overall_scores %>% group_by(region, npred, mtry, nodesize, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$ss)
-qrf_bs <- overall_scores %>% group_by(region, npred, mtry, nodesize, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
+qrf_ss <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$ss)
+qrf_bs <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
 write.csv(qrf_ss, file="qrf_ss.csv")
+write.csv(qrf_bs, file="qrf_bs.csv")
 # quantiles_frame = data.frame()
 # for (m in m_settings){
 #   for (node_size in node_size_settings){
