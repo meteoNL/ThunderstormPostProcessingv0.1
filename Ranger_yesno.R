@@ -129,4 +129,3 @@ test_that("Random subset numbers",{
   expect_equal(min(randomsubset),1)
   expect_equal(max(randomsubset),3)
 })
-
