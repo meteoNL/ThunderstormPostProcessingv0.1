@@ -113,9 +113,15 @@ for (y in years){
 #this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv")
-qrf_ss <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = Dischargerate, pred = probability, bins = FALSE)$ss)
-qrf_bs <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = Dischargerate, pred = probability, bins = FALSE)$bs)
-qrf_crps = overall_scores_quan %>% group_by(npred, mtry, min_n_size) %>% summarise(crps = mean(EnsCrps(as.matrix(overall_scores_quan[1:10]),as.numeric(unlist(overall_scores_quan[11])))))
+qrf_ss <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = observed, pred = probability, bins = FALSE)$ss)
+qrf_bs <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = observed, pred = probability, bins = FALSE)$bs)
+overall_scores_quan = data.frame(overall_scores_quan, newcol = overall_scores_quan$npred*10000+overall_scores_quan$mtry*100+overall_scores_quan$min_n_size)
+qrf_crps = data.frame()
+for(val in unique(overall_scores_quan$newcol)){
+  subset = filter(overall_scores_quan, newcol == val)
+  newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:10]),as.numeric(unlist(subset[11])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
+  qrf_crps = rbind(qrf_crps, newscore)
+}
 write.csv(qrf_ss, file="qrf_thresholds_ss.csv")
 write.csv(qrf_bs, file="qrf_thresholds_bs.csv")
 write.csv(qrf_crps, file="qrf_thresholds_crps.csv")
