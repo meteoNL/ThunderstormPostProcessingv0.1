@@ -21,10 +21,10 @@ library(profvis)
 #rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
-p = 0.3 #power transformation to linearize thresholds
+p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = c(6,10,15,25,36,50,70)
+thres = c(6,10,15,25,36,50)
 thres_eval = 20 #precipitation threshold for evaluation
 minpredictant = 1.5 #minimum precipitation sum considered as precipitation
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
@@ -209,8 +209,8 @@ for(npred in unique(brierdataframe$npredictors)){
     thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thres, ss_9fold = score, ss_years = score2))
   }
 }
-#plot(brierdataframe$npredictors, brierdataframe$brier_score)
-
+plot(thescores$numpredictors, thescores$ss_years)
+print(thescores)
 #-----------------------------------------------------------------
 ## Testing the functions
 library(devtools)
