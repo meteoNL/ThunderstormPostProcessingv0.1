@@ -12,7 +12,7 @@ library(SpecsVerification)
 #hyperparameters
 numbtree = 250
 m_settings = c(2, 6, 10)
-min_length = 2
+min_length = 1
 node_size_settings = c(3, 9, 15)#50
 
 # import the data frame and generate training and testing set
@@ -47,7 +47,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     formul = train_set[predictant]~.
     assign("train_set", train_set, .GlobalEnv)
     assign("predictant", predictant, .GlobalEnv)
-    fit1=ranger(formul, data = data.frame(train_set[c(pot_preds)]), num.trees = ntree_hyp, mtry = min(m_hyp, length(varindexset)), min.node.size = node_size_hyp, importance = "impurity", quantreg = TRUE)    #plot(qrf_fit)
+    fit1=ranger(formul, data = data.frame(train_set[c(pot_preds)]), num.trees = ntree_hyp, mtry = min(m_hyp, (length(varindexset)+1)), min.node.size = node_size_hyp, importance = "impurity", quantreg = TRUE)    #plot(qrf_fit)
 
     #remove variable
     remove_variable = varindexset[fit1$variable.importance == min(fit1$variable.importance)][1]
@@ -60,9 +60,9 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
 
     ######
     fit1_pred = predict(fit1, data = test_set)
-    test_importance_save = data.frame(npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
+    test_importance_save = data.frame(npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
     #print(test_importance_save)
-    qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
+    qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval)
 
     #remove globals and collect the data
     rm("predictant", "train_set")
@@ -132,7 +132,7 @@ test_that("Predictor ranking of dataset",{
 })
 test_that("Dataset complete?",{
   expect_equal(climset %>% arrange(Year, Month, Day), rbind(train_y, test_y) %>% arrange(Year, Month, Day))
-  expect_equal(rbind(train_q,test_q) %>% arrange(Year, Month, Day, region),train_sub %>% arrange(Year, Month, Day, region))
+  expect_equal(train_sub %>% arrange(Year, Month, Day, region), rbind(train_q,test_q) %>% arrange(Year, Month, Day, region))
 })
 
 test_that("Random subset numbers",{
