@@ -83,7 +83,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
   }
   result$overall_scores_local = overall_scores_local
   result$overall_quan = overall_quan
-  result$importances_save = importance_saves
+  result$importances_save = importances_save
   return(result)
 }
 q = 1
