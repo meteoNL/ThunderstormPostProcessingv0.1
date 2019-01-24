@@ -61,14 +61,16 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     ######
     fit1_pred = predict(fit1, data = test_set)
     test_importance_save = data.frame(npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
-    print(test_importance_save)
+    #print(test_importance_save)
     qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
 
     #remove globals and collect the data
     rm("predictant", "train_set")
-    result$overall_scores_local = rbind(overall_scores_local, qrf_pred)
-    result$importances_save = rbind(importances_save, test_importance_save)
+    overall_scores_local = rbind(overall_scores_local, qrf_pred)
+    importances_save = rbind(importances_save, test_importance_save)
   }
+  result$overall_scores_local = overall_scores_local
+  result$importances_save = importances_save
   return(result)
 }
 
