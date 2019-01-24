@@ -12,7 +12,7 @@ library(SpecsVerification)
 #hyperparameters
 numbtree = 250
 m_settings = c(2, 6, 10)
-min_length = 2
+min_length = 1
 node_size_settings = c(3, 9, 15)#50
 
 # import the data frame and generate training and testing set
@@ -66,9 +66,9 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
       fit1_pred_thres = predict(fit1, data = test_set, predict.all = TRUE)
       obs = as.numeric(test_set[predictant_index] > threshold)
       probs = rowMeans(fit1_pred_thres$predictions>threshold)
-      qrf_pred = rbind(qrf_pred, data.frame(probability = probs, observed = obs, region = test_set["region"], thres = threshold, npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval))
+      qrf_pred = rbind(qrf_pred, data.frame(probability = probs, observed = obs, region = test_set["region"], thres = threshold, npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval))
     }
-    test_importance_save = data.frame(npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
+    test_importance_save = data.frame(npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
    # qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
     #evaluate brier score and add to data frame
     # qrf_bs <- qrf_pred %>% group_by(region) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
@@ -109,7 +109,7 @@ for (y in years){
         result = qrf_procedure(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
         overall_scores = rbind(overall_scores, result$overall_scores_local)
         overall_scores_quan = rbind(overall_scores_quan, result$overall_quan)
-        importances_dataset = rbind(importances_dataset, result$imporances_save)
+        importances_dataset = rbind(importances_dataset, result$importances_save)
       }
     }
   }
