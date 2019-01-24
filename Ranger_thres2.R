@@ -79,7 +79,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     #print(q)
     overall_scores_local = rbind(overall_scores_local, qrf_pred)
     overall_quan = rbind(overall_quan, qrf_pred_quan)
-    importances_save = rbind(importance_saves, test_importance_save)
+    importances_save = rbind(importances_save, test_importance_save)
   }
   result$overall_scores_local = overall_scores_local
   result$overall_quan = overall_quan
