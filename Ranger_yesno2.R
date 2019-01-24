@@ -132,7 +132,7 @@ test_that("Predictor ranking of dataset",{
 })
 test_that("Dataset complete?",{
   expect_equal(climset %>% arrange(Year, Month, Day), rbind(train_y, test_y) %>% arrange(Year, Month, Day))
-  expect_equal(rbind(train_q,test_q) %>% arrange(Year, Month, Day),train_sub %>% arrange(Year, Month, Day))
+  expect_equal(rbind(train_q,test_q) %>% arrange(Year, Month, Day, region),train_sub %>% arrange(Year, Month, Day, region))
 })
 
 test_that("Random subset numbers",{
