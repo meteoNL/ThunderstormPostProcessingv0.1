@@ -10,7 +10,7 @@ library(tree)
 library(SpecsVerification)
 
 #hyperparameters
-numbtree = 250
+numbtree = 500
 m_settings = c(2, 6, 10)
 min_length = 1
 node_size_settings = c(3, 9, 15)#50
