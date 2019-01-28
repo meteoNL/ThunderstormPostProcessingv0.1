@@ -242,7 +242,6 @@ model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = te
 test_that("Testing function fit_test_all_pot_pred",{
   expect_equal(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 32), 30)
   expect_error(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 30))
-  expect_error(fit_test_all_pot_pred(train_j, 30, 30, thres, used_preds = 32))
   expect_error(fit_test_all_pot_pred(train_j, 450, 30, thres, used_preds = 32))
 })
 
