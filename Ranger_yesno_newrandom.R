@@ -47,7 +47,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     formul = train_set[predictant]~.
     assign("train_set", train_set, .GlobalEnv)
     assign("predictant", predictant, .GlobalEnv)
-    fit1=ranger(formul, data = data.frame(train_set[c(pot_preds)]), num.trees = ntree_hyp, mtry = min(m_hyp, (length(varindexset))), min.node.size = node_size_hyp, importance = "impurity", quantreg = TRUE)    #plot(qrf_fit)
+    fit1=ranger(formul, data = data.frame(train_set[c(pot_preds)]), num.trees = ntree_hyp, mtry = min(m_hyp, (length(varindexset))), min.node.size = node_size_hyp, importance = "permutation", quantreg = TRUE)    #plot(qrf_fit)
 
     #remove variable
     remove_variable = varindexset[fit1$variable.importance == min(fit1$variable.importance)][1]
@@ -120,7 +120,7 @@ library(devtools)
 library(testthat)
 usethis::use_testthat()
 form = test_df["yvalues"] ~.
-qrf_fit_test <- ranger(form, data = data.frame(test_df[seq(1,3)]), num.trees=250, mtry = 1, min.node.size = 5, quantreg = TRUE, importance ="impurity")
+qrf_fit_test <- ranger(form, data = data.frame(test_df[seq(1,3)]), num.trees=250, mtry = 1, min.node.size = 5, quantreg = TRUE, importance ="permutation")
 importance_table = qrf_fit_test$variable.importance
 test_that("Predictor ranking of dataset",{
   expect_gt(importance_table[2],importance_table[1])
