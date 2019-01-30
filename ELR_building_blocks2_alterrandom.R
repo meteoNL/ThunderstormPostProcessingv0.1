@@ -25,7 +25,7 @@ p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
 numsubset = 3 #number of subsets for hyperparameter selection
 thres = c(6,10,15,25,36,50)
-thres_eval = 20 #precipitation threshold for evaluation
+thres_eval = 40 #precipitation threshold for evaluation
 minpredictant = 1.5 #minimum precipitation sum considered as precipitation
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 years = c(as.numeric(unique(ObsPV$Year)))
@@ -68,9 +68,9 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
 
 verify_ELRmodel_per_reg <- function(test_set, model, predictant, test_threshold, i, reliabilityplot = FALSE){
   briers = c()
-  # for(reg in reg_set){
+ # for(reg in reg_set){
 
-  #select subset
+    #select subset
   #region_subset = filter(test_set, region == reg)
   observed = data.frame(test_set[predictant])
 
@@ -81,11 +81,11 @@ verify_ELRmodel_per_reg <- function(test_set, model, predictant, test_threshold,
   brierbase = eval$bs.baseline
   briers = append(briers, c(y, i, -9999, test_threshold, brierval, brierbase))
 
-  #if required plot reliability plot
+    #if required plot reliability plot
   if (reliabilityplot == TRUE){
     verification_set <- verify(as.numeric(observed > test_threshold), (1-values), frcst.type = "prob", obs.type = "binary", title = "")
     reliability.plot(verification_set, titl = paste(paste(names(model$start)[seq(3,length(model$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
-    # }
+   # }
   }
   return(briers)
 }
@@ -163,9 +163,10 @@ models = list()
 q = 1
 for(y in years){
   train_fin = filter(climset, Year != y)
-  set.seed(seq(years)[q]) #for reproducability purposes
-  randomsubset = round(runif(nrow(train_fin))*numsubset+0.5)
-  train_sub = cbind(train_fin, subset = randomsubset)
+  set.seed(15+seq(years)[q]) #for reproducability purposes
+  testdf = data.frame(validdate = unique(train_fin$validdate), subset = round(runif(unique(train_fin$validdate))*numsubset+0.5))
+  train_sub <- left_join(train_fin, testdf, by = names(testdf)[1])
+  #train_sub = cbind(train_fin, subset = randomsubset)
   for(j in seq(numsubset)){
     #check approximately equal length of random subsets by printing relative length
     relweight_subset = sum(train_sub$subset[train_sub$subset == j])/nrow(train_sub)/j
@@ -179,7 +180,7 @@ for(y in years){
     #find a fit
     result = fit_extended_logitModels(train_j, test_j, predictant = ind_predictant, pot_pred_indices = varindex,
                                       train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
-    # print(result$briers)
+   # print(result$briers)
 
     #put results in dataframes and vectors
     brierdataframe = rbind(brierdataframe, result$verification)
@@ -211,7 +212,7 @@ for(npred in unique(brierdataframe$npredictors)){
 }
 plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
-write.csv(thescores, "ELR_scores.csv")
+write.csv(thescores, "ELR_scores2.csv")
 #-----------------------------------------------------------------
 ## Testing the functions
 library(devtools)
@@ -247,8 +248,8 @@ test_that("Testing function fit_test_all_pot_pred",{
 })
 
 test_that("Testing function verify_ELRmodel_per_reg: error expectation ",{
-  expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
-})
+            expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
+            })
 
 test_that("Testing function fit_extended_logitModels ",{
   expect_equal(class(model_testthat[[1]]),"hxlr")
@@ -285,4 +286,3 @@ test_that("Verify function test with the second testing dataframe",{
   expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
   expect_error(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE))
 })
-
