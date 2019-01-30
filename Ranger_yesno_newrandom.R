@@ -55,13 +55,9 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     print("removed variable:")
     print(remove_variable)
 
-    #evaluate continuous ranked probability score
-    #qrf_pred_quan = predict(qrf_fit, data.frame(test_set[, pot_preds]), what = seq(0.05,0.95,0.1))
-
     ######
     fit1_pred = predict(fit1, data = test_set)
     test_importance_save = data.frame(npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset))), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
-    #print(test_importance_save)
     qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = (length(varindexset)), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset))), min_n_size = node_size_hyp, w = wval, y = yval)
 
     #remove globals and collect the data
@@ -139,4 +135,3 @@ test_that("Random subset numbers",{
   expect_equal(min(testdf$subset),1)
   expect_equal(max(testdf$subset),3)
 })
-
