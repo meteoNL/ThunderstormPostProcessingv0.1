@@ -25,7 +25,7 @@ p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
 numsubset = 3 #number of subsets for hyperparameter selection
 thres = c(6,10,15,25,36,50)
-thres_eval = 40 #precipitation threshold for evaluation
+thres_eval = 20 #precipitation threshold for evaluation
 minpredictant = 1.5 #minimum precipitation sum considered as precipitation
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 years = c(as.numeric(unique(ObsPV$Year)))
@@ -64,30 +64,6 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
   return(added)
-}
-
-verify_ELRmodel_per_reg <- function(test_set, model, predictant, test_threshold, i, reliabilityplot = FALSE){
-  briers = c()
- # for(reg in reg_set){
-
-    #select subset
-  #region_subset = filter(test_set, region == reg)
-  observed = data.frame(test_set[predictant])
-
-  #predict with model and verify, calculate bs
-  values <- predict(model, newdata = test_set, type = "cumprob", thresholds = test_threshold)
-  eval = brier(as.numeric(observed > test_threshold), (1-values), bins = FALSE)
-  brierval = eval$bs
-  brierbase = eval$bs.baseline
-  briers = append(briers, c(y, i, -9999, test_threshold, brierval, brierbase))
-
-    #if required plot reliability plot
-  if (reliabilityplot == TRUE){
-    verification_set <- verify(as.numeric(observed > test_threshold), (1-values), frcst.type = "prob", obs.type = "binary", title = "")
-    reliability.plot(verification_set, titl = paste(paste(names(model$start)[seq(3,length(model$start))],collapse=" + "), " - Brier score = ", round(verification_set$bs,ndec)))
-   # }
-  }
-  return(briers)
 }
 
 new_verify_ELR <- function(test_set, model, predictant, test_threshold, npred, reliabilityplot = FALSE){
@@ -247,10 +223,6 @@ test_that("Testing function fit_test_all_pot_pred",{
   expect_error(fit_test_all_pot_pred(train_j, 450, 30, thres, used_preds = 32))
 })
 
-test_that("Testing function verify_ELRmodel_per_reg: error expectation ",{
-            expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
-            })
-
 test_that("Testing function fit_extended_logitModels ",{
   expect_equal(class(model_testthat[[1]]),"hxlr")
   expect_error(fit_extended_logitModels(testthat_df, testthat_df, predictant = 1, pot_pred_indices = c(2,7), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars = 1))
@@ -275,14 +247,4 @@ test_that("Testing the predictor choice among 4 predictors",{
   expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(3,5), thresholds_testthat2, used_preds = 2), 5)
   expect_equal(fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = c(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2),fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2))
   expect_equal(model_testthat2[[1]],model_testthat22[[1]])
-})
-
-modelres_manually = exp(0.07722407+0.02944015*thresholds_testthat2[1]-2.94777089*testthat_df2$x1)
-modelres2_manually = exp((-1.0189620+0.2509291*thresholds_testthat2[1]-25.5650782*x1-2.8128970*x4))
-test_that("Verify function test with the second testing dataframe",{
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs.baseline)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
-  expect_error(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE))
 })
