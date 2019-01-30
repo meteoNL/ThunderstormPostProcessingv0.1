@@ -19,7 +19,6 @@ node_size_settings = c(3, 9, 15)#50
 minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
-#ObsPV <- filter(ObsPV, region != 1)
 numbsubset = 3
 years = c(as.numeric(unique(ObsPV$Year.x)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
@@ -68,14 +67,7 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
       qrf_pred = rbind(qrf_pred, data.frame(probability = probs, observed = obs, region = test_set["region"], thres = threshold, npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval))
     }
     test_importance_save = data.frame(npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval, importances = sort(fit1$variable.importance)[(length(fit1$variable.importance)-min(5,length(fit1$variable.importance))):length(fit1$variable.importance)])
-   # qrf_pred = data.frame(prob = fit1_pred$predictions, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
-    #evaluate brier score and add to data frame
-    # qrf_bs <- qrf_pred %>% group_by(region) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
-    #  print(length(varindexset))
-    #  brierscore = data.frame(matrix(qrf_bs$bs, ncol = length(th)), region = matrix(qrf_bs$region, ncol = length(th)), testsubset = wval, nodesize = node_size_hyp, mtry = m_hyp, test_year = yval, npredictors = length(varindexset))
-    #  overall_scores_local = rbind(overall_scores_local, brierscore)
     rm("predictant", "train_set")
-    #print(q)
     overall_scores_local = rbind(overall_scores_local, qrf_pred)
     overall_quan = rbind(overall_quan, qrf_pred_quan)
     importances_save = rbind(importances_save, test_importance_save)
@@ -160,4 +152,3 @@ test_that("Random subset numbers",{
   expect_equal(min(testdf$subset),1)
   expect_equal(max(testdf$subset),3)
 })
-
