@@ -14,7 +14,9 @@ usethis::use_testthat()
 
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #read dataset
+setwd("/usr/people/groote/")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
+setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = unique(ObsPV$validtime)[2]
