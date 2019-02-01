@@ -90,7 +90,6 @@ fit_test_all_pot_pred_sc <- function(train_set, predictant, pot_pred_indices, tr
   #selects the best predictor by forward fittng, trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
-    print(i)
     model = hxlr(reformulate(termlabels = paste0(reformulate(termlabels = names(data.frame(train_set[used_preds]))),"|",
                                                  reformulate(termlabels = names(data.frame(train_set[i],train_set[used_sc_preds]))))[2],
                              response = as.name(names(train_set[predictant]))),
@@ -130,7 +129,6 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   variables = c(variables, added)
   added = fit_test_all_pot_pred_sc(train_set, predictant, pot_pred_indices, train_thresholds, variables)
   sc_variables = c(sc_variables, added)
-  print(sc_variables)
 
   #add this model to the model list
   firstmodel = hxlr(reformulate(termlabels = paste0(reformulate(termlabels = names(data.frame(train_set[variables]))),
