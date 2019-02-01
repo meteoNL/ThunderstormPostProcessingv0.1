@@ -168,6 +168,8 @@ for(y in years){
   }
   q = q+1 #update seed set
 }
+
+models2 = list()
 brierdataframe2 = data.frame()
 for(y in years){
   test_fin = filter(climset, Year == y)
@@ -175,7 +177,7 @@ for(y in years){
   result = fit_extended_logitModels(train_fin, test_fin, predictant = ind_predictant, pot_pred_indices = varindex,
                                     train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
   brierdataframe2 = rbind(brierdataframe2, data.frame(result$verification))
-  models = append(models, result$models)
+  models2 = append(models2, result$models)
 }
 
 thescores=data.frame()
