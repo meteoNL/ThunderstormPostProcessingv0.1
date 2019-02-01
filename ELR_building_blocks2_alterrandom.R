@@ -27,7 +27,10 @@ numsubset = 3 #number of subsets for hyperparameter selection
 thres = c(6,10,15,25,36,50)
 thres_eval = 20 #precipitation threshold for evaluation
 minpredictant = 1.5 #minimum precipitation sum considered as precipitation
+
+setwd("/usr/people/groote/")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
+setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = unique(ObsPV$validtime.x)[2]
