@@ -138,6 +138,25 @@ LR_bs <- brierdataframe %>% group_by(npred, region) %>% summarise(bs = brier(obs
 LR_ss2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$ss)
 LR_bs2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$bs)
 
+nr=max(brierdataframe2$npred)
+for(reg in regions){
+  plot.new()
+  for(pred in unique(brierdataframe2$npred)){
+    subset = filter(brierdataframe2, npred == pred, region == reg)
+    print(dim(subset))
+    if(pred == 1){
+      #reliability.plot(verify(subset$obs, subset$prob), titl = paste0("Reliability plot 0/1, region = ", reg), legend.names = "1 predictor, rel. freq:")
+      plot(data.frame(verify(subset$obs, subset$prob)[[8]],verify(subset$obs, subset$prob)[[9]]), xlim = 0:1, ylim = 0:1, legend.names = pred, col = rainbow(maxsteps)[pred], type = "o", lwd = 2, xlab = "Forecasted probability", ylab = "Observed relative frequency", main = paste0("Reliability plot 0/1, region = ", reg))
+
+    }else{
+      lines(verify(subset$obs,subset$prob)[[8]],verify(subset$obs,subset$prob)[[9]], legend.names = pred, col = rainbow(maxsteps)[pred], type = "o", lwd = 2)#, col = c(1-0.1*pred,1,1))
+    }
+    abline(0,1)
+    legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
+  }
+  text(0.05,1.02,"No. of predictors:")
+}
+
 # --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime.x == VT & leadtime_count == LT) %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
