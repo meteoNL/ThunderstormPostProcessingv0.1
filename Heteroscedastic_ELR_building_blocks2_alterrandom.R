@@ -223,6 +223,20 @@ for(y in years){
   models2 = append(models2, result$models)
 }
 
+nr=max(brierdataframe2$npredictors)
+plot.new()
+for(pred in unique(brierdataframe2$npredictors)){
+  subset = filter(brierdataframe2, npredictors == pred)
+  print(dim(subset))
+  if(pred == 1){
+    plot(data.frame(verify(subset$obs, subset$prob)[[8]],verify(subset$obs, subset$prob)[[9]]), xlim = 0:1, ylim = 0:1, legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability", ylab = "Observed relative frequency", main = "Reliability plot thresholds")
+  }else{
+    lines(verify(subset$obs,subset$prob)[[8]],verify(subset$obs,subset$prob)[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2)#, col = c(1-0.1*pred,1,1))
+  }
+  abline(0,1)
+  legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
+}
+
 thescores=data.frame()
 for(npred in unique(brierdataframe2$npredictors)){
   for(thres in unique(brierdataframe2$threshold)){
