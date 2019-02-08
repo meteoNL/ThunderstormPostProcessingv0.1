@@ -1,6 +1,5 @@
 ########################################
-#This is without any transformations!!!#
-#For now, sample climatology is used!!!#
+#This is without any transformations!!!# (except RI)
 ########################################
 
 
