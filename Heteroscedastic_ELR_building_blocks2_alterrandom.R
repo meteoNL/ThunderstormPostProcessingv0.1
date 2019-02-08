@@ -23,6 +23,7 @@ rm(list=ls(all=TRUE))
 #set thresholds and hyperparameter; determine test dataset and training dataset
 p = 0.25 #power transformation to linearize thresholds
 maxvars = 3
+nmembers = 10 #number of members/quantiles to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
 thres = c(4,6,10,15,25,36,50,70,100)
 thres_eval = 20 #precipitation threshold for evaluation
@@ -109,6 +110,23 @@ new_verify_ELR <- function(test_set, model, predictant, test_threshold, npred, r
   return(result)
 }
 
+getEnsCRPS <- function(model, test_set, members, observations){
+  quans = (seq(members)-0.5)/members # these are the quantiles to be computed with given number of members
+  logtrans = log(1/quans - 1)
+  logtrans = matrix(rep(logtrans, each = dim(test_set)[1]), ncol = members) #repetition of transformed quantiles in matrix
+
+  #apply the XLR model
+  if(length(model$coefficients$scale)!=0){
+    logtrans = logtrans * exp(matrix(rep(as.matrix(test_set[names(model$coefficients$scale)])%*%model$coefficients$scale, members),ncol = members))
+  }
+  modelpred = logtrans +matrix(rep(-model$coefficients$intercept[1]+as.matrix(test_set[names(model$coefficients$location)])%*%model$coefficients$location, members), ncol = members)
+  modelpred = modelpred/model$coefficients$intercept[2]
+
+  #calculate ensemble CRPS
+  result = mean(EnsCrps(as.matrix(modelpred), observations))
+  return(result)
+}
+
 fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predictant, pot_pred_indices = varindex,
                                      train_thresholds = thres, test_thresholds = thres, maxnumbervars = maxvars){
 
@@ -118,6 +136,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   verified_set = data.frame()
   results = list()
   n_variables = c()
+  crpsscores = c()
 
   if(maxnumbervars > length(pot_pred_indices)){
     message("You can not add more variables to the model than the number of available predictors")
@@ -147,7 +166,6 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     added = fit_test_all_pot_pred(train_set, predictant, remaining_indices, train_thresholds, used_preds = variables, used_sc_preds = sc_variables)
     variables = c(variables, added)
 
-# Switch following line on if multiple scale predictors have to be used!! Then there are always as many location as scale predictors. Otherwise, there is one scale predictor.
  #   added = fit_test_all_pot_pred_sc(train_set, predictant, pot_pred_indices, train_thresholds, used_preds = variables, used_sc_preds = sc_variables)
 #    sc_variables = c(sc_variables, added)
 
@@ -168,12 +186,13 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     for(j in seq(length(test_thresholds))){
       test_threshold = test_thresholds[j]
       verified_set = rbind(verified_set, new_verify_ELR(test_set, model_ver, predictant, test_threshold, n_variables_i, reliabilityplot = FALSE))
-
+      crpsscores = append(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
     }
   }
 
   #add to results list
   results$models = modellist
+  results$crpsscores = crpsscores
   results$verification = verified_set
   return(results)
 }
@@ -182,6 +201,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
 
 brierdataframe = data.frame()
 models = list()
+crpsscorelist = list()
 
 q = 1
 for(y in years){
@@ -207,12 +227,13 @@ for(y in years){
 
     #put results in dataframes and vectors
     brierdataframe = rbind(brierdataframe, result$verification)
-
+    crpsscorelist = append(crpsscorelist, result$crpsscores)
     models = append(models, result$models)
   }
   q = q+1 #update seed set
 }
-models2 = list()
+models2=list()
+crpsscorelist2 = list()
 brierdataframe2 = data.frame()
 for(y in years){
   test_fin = filter(climset, Year == y)
@@ -221,8 +242,8 @@ for(y in years){
                                     train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
   brierdataframe2 = rbind(brierdataframe2, data.frame(result$verification))
   models2 = append(models2, result$models)
+  crpsscorelist2 = append(crpsscorelist2, result$crpsscores)
 }
-
 nr=max(brierdataframe2$npredictors)
 plot.new()
 for(pred in unique(brierdataframe2$npredictors)){
@@ -236,7 +257,6 @@ for(pred in unique(brierdataframe2$npredictors)){
   abline(0,1)
   legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
 }
-
 thescores=data.frame()
 for(npred in unique(brierdataframe2$npredictors)){
   for(thres in unique(brierdataframe2$threshold)){
@@ -250,3 +270,4 @@ for(npred in unique(brierdataframe2$npredictors)){
 plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
 write.csv(thescores, "HELR_scores2.csv")
+#-----------------------------------------------------------------
