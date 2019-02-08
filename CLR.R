@@ -1,15 +1,10 @@
 ########################################
-#This is without any transformations!!!#
-#For now, sample climatology is used!!!#
+#This is without any transformations!!!# (except RI)
 ########################################
 
-
-#######
-
-
-#THIS IS STILL USING COMPLEMENTARY PROBABILITIES P_y=0 = (1-P_y=1)
-
-#######
+#####
+# This model type was used to compare with extended logistic regression
+####
 
 ### LOAD EXTERNAL CODE
 library(dplyr)
