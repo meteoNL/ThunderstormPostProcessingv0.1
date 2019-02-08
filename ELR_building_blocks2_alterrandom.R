@@ -2,12 +2,6 @@
 #This is without any transformations!!!# (except RI)
 ########################################
 
-
-#######
-
-
-#THIS IS STILL USING COMPLEMENTARY PROBABILITIES P_y=0 = (1-P_y=1)
-
 #######
 
 ### LOAD EXTERNAL CODE
