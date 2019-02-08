@@ -4,6 +4,7 @@
 
 #####
 # This model type was used to compare with extended logistic regression
+# Testing part is left out
 ####
 
 ### LOAD EXTERNAL CODE
@@ -190,77 +191,4 @@ for(npred in unique(brierdataframe$npredictors)){
 plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
 write.csv(thescores, "CLR_scores2.csv")
-#-----------------------------------------------------------------
-## Testing the functions
-library(devtools)
-library(testthat)
-usethis::use_testthat()
-
-test_that("Test resulting brier data frame for obvious errors",{
-  expect_equal(unique(thescores$threshold), thres_eval)
-  expect_gte(min(thescores$numpredictors),1)
-  expect_lte(min(thescores$numpredictors),maxvars)
-  expect_lte(min(thescores$ss_years),1)
-  expect_lte(min(thescores$ss_9fold),1)
-})
-test_that("Test dataset and potential predictors complete?", {
-  expect_equal(climset %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
-  expect_equal(length(pot_preds), length(varindex))
-})
-test_that("Transformation with power p - check", {
-  expect_equal(c(climset[ind_predictant]^(1/p)),c(filter(ObsPV, Ndischarge > minpredictant & validtime == VT &
-                                                           leadtime_count == LT)[ind_predictant]))
-  expect_gte(min(climset[ind_predictant]^(1/p)),1)
-})
-
-y = years[1]
-regions = c(1)
-testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), region = rep(1,11))
-thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
-model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
-test_that("Testing function fit_test_all_pot_pred",{
-  expect_equal(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 32), 30)
-  expect_error(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 30))
-  expect_error(fit_test_all_pot_pred(train_j, 450, 30, thres, used_preds = 32))
-})
-
-test_that("Testing function verify_ELRmodel_per_reg: error expectation ",{
-  expect_error(verify_ELRmodel_per_reg(train_j, model_testthat[[1]], 1, thresholds_testthat[1], 1, reliabilityplot = FALSE)[6])
-})
-
-test_that("Testing function fit_extended_logitModels ",{
-  expect_equal(class(model_testthat[[1]]),"hxlr")
-  expect_error(fit_extended_logitModels(testthat_df, testthat_df, predictant = 1, pot_pred_indices = c(2,7), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars = 1))
-  expect_error(fit_extended_logitModels(testthat_df, train_j, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars = 1))
-  expect_equal(fit_extended_logitModels(testthat_df, testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars = 3),"failed")
-})
-
-set.seed(121)
-x1 = rnorm(500,0,5)
-x2 = rnorm(500,0,5)
-x3 = rnorm(500,0,5)
-x4 = rnorm(500,0,5)
-pert = rnorm(500,0,10)
-y1 = x1*100 + x4*10 + pert
-testthat_df2 = data.frame(y1, x1, x2, x3, x4, region = rep(1,500))
-thresholds_testthat2 = c(quantile(testthat_df2$y1,0.25)[[1]],quantile(testthat_df2$y1,0.75)[[1]])
-model_testthat2 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 1)$models
-model_testthat22 = fit_extended_logitModels(train_set = testthat_df2, test_set = testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, test_thresholds = thresholds_testthat2, maxnumbervars  = 2)$models
-
-test_that("Testing the predictor choice among 4 predictors",{
-  expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(2,5), thresholds_testthat2), 2)
-  expect_equal(fit_test_all_pot_pred(testthat_df2, 1, seq(3,5), thresholds_testthat2, used_preds = 2), 5)
-  expect_equal(fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = c(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2),fit_extended_logitModels(testthat_df2, testthat_df2, predictant = 1, pot_pred_indices = seq(2,5), train_thresholds = thresholds_testthat2, maxnumbervars = 2))
-  expect_equal(model_testthat2[[1]],model_testthat22[[1]])
-})
-
-modelres_manually = exp(0.07722407+0.02944015*thresholds_testthat2[1]-2.94777089*testthat_df2$x1)
-modelres2_manually = exp((-1.0189620+0.2509291*thresholds_testthat2[1]-25.5650782*x1-2.8128970*x4))
-test_that("Verify function test with the second testing dataframe",{
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[1]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres_manually), bins = FALSE)$bs.baseline)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[5],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs)
-  expect_equal(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE)[6],brier(as.numeric(testthat_df2$y1 > thresholds_testthat2[1]),1/(1+modelres2_manually), bins = FALSE)$bs.baseline)
-  expect_error(verify_ELRmodel_per_reg(testthat_df2, model_testthat22[[2]], c(2), 1, thresholds_testthat2[1], 1, reliabilityplot = FALSE))
-})
 
