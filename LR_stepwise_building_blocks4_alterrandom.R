@@ -1,6 +1,5 @@
 ########################################
 #This is without any transformations!!!#
-#For now, sample climatology is used!!!#
 ########################################
 
 rm(list=ls(all=TRUE))
