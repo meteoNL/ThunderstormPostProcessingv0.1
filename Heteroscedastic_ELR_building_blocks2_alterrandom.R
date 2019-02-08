@@ -15,6 +15,7 @@
 library(dplyr)
 library(MASS)
 library(verification)
+library(SpecsVerification)
 library(arm)
 library(crch)
 library(profvis)
