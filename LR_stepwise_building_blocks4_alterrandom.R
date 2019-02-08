@@ -23,10 +23,13 @@ VT = unique(ObsPV$validtime)[2]
 regions = c(unique(ObsPV$region))
 threshold = 1.50
 
+#ObsPV = cbind(ObsPV, log(0.01+ObsPV$LidStrength_0mabovegnd_6hrlymin/ObsPV$PrecipitableWater_0mabovegnd_6hrlymax))
+
+
 #set default available variables: predictant and predictor
 numsubset = 3 #number of subsets for hyperparametersetting
 ind_predictant = 107
-varindex=seq(18,101)
+varindex=c(seq(18,101))
 pot_preds=names(ObsPV[varindex])
 ndec = 4
 maxsteps = 6
@@ -137,17 +140,18 @@ LR_ss <- brierdataframe %>% group_by(npred, region) %>% summarise(bs = brier(obs
 LR_bs <- brierdataframe %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$bs)
 LR_ss2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$ss)
 LR_bs2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$bs)
+
 nr=max(brierdataframe2$npred)
 for(reg in regions){
   plot.new()
   for(pred in unique(brierdataframe2$npred)){
     subset = filter(brierdataframe2, npred == pred, region == reg)
-    print(dim(subset))
     if(pred == 1){
-           plot(data.frame(verify(subset$obs, subset$prob)[[8]],verify(subset$obs, subset$prob)[[9]]), xlim = c(0, 1), ylim = c(0, 1),
+      plot(data.frame(verify(subset$obs, subset$prob)[[8]],verify(subset$obs, subset$prob)[[9]]), xlim = c(0, 1), ylim = c(0, 1),
            legend.names = pred,
            col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability", ylab = "Observed relative frequency",
            main = paste0("Reliability plot 0/1, region = ", reg))
+
     }else{
       lines(verify(subset$obs,subset$prob)[[8]],verify(subset$obs,subset$prob)[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2)#, col = c(1-0.1*pred,1,1))
     }
