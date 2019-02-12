@@ -70,17 +70,23 @@ new_Obs <- left_join(new_Obs, dataset2, by = "id")
 
 #### GENERATE SOME EXTRA PREDICTORS ####
 PW1 = log(new_Obs$PrecipitableWater_0mabovegnd_6hrlymax)
-PW2 = new_Obs$PrecipitableWater_0mabovegnd_6hrlymax/4.
+PW2 = new_Obs$PrecipitableWater_0mabovegnd_6hrlymax
+hprecipsqrtmax = new_Obs$Rain_0mabovegnd_6hrlymax
 newpredictors = data.frame(
   Boyden_PW1 = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*PW1,
   Boyden_PW2 = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*PW2,
+  Boyden_hprecipmax = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*hprecipsqrtmax,
   Bradbury_PW1 = (new_Obs$Bradbury_0mabovegnd_6hrlymin-14)*PW1,
   Bradbury_PW2 = (new_Obs$Bradbury_0mabovegnd_6hrlymin-14)*PW2,
+  Bradbury_hprecipmax = (new_Obs$Bradbury_0mabovegnd_6hrlymin-14)*hprecipsqrtmax,
   Edward_PW1 = (new_Obs$theataW_925mb_6hrlymax-new_Obs$theataW_500mb_6hrlymin)*PW1,
   Edward_PW2 = (new_Obs$theataW_925mb_6hrlymax-new_Obs$theataW_500mb_6hrlymin)*PW2,
+  Edward_hprecipmax = (new_Obs$theataW_925mb_6hrlymax-new_Obs$theataW_500mb_6hrlymin)*hprecipsqrtmax,
   LidS_PW = log(0.01+new_Obs$LidStrength_0mabovegnd_6hrlymin*PW2),
+  LidS_hprecipmax = log(0.01+new_Obs$LidStrength_0mabovegnd_6hrlymin*hprecipsqrtmax),
   Lifted_PW1 = PW1/(new_Obs$Lifted_0mabovegnd_6hrlymin+6),
   Lifted_PW2 = PW2/(new_Obs$Lifted_0mabovegnd_6hrlymin+6),
+  Lifted_hprecipmax = hprecipsqrtmax/(new_Obs$Lifted_0mabovegnd_6hrlymin+6),
   binary_1 = as.numeric((new_Obs$Boyden_0mabovegnd_6hrlymax > 93) *(new_Obs$PrecipitableWater_0mabovegnd_6hrlymax > 10) *(new_Obs$LidStrength_0mabovegnd_6hrlymin < 3) ),
   binary_2 = as.numeric((new_Obs$Boyden_0mabovegnd_6hrlymax > 93) *(new_Obs$PrecipitableWater_0mabovegnd_6hrlymax > 10) *(new_Obs$LidStrength_0mabovegnd_6hrlymin < 3)*(new_Obs$modJefferson_0mabovegnd_6hrlymax > 20)*(new_Obs$TotalTotals_2e_0mabovegnd_6hrlymax > 20) ),
   cos_WDIR_500_max = cos(new_Obs$WDIR_500mb_6hrlymax),
@@ -90,7 +96,11 @@ newpredictors = data.frame(
   cos_WDIR_500_min = cos(new_Obs$WDIR_500mb_6hrlymin),
   sin_WDIR_500_min = sin(new_Obs$WDIR_500mb_6hrlymin),
   cos_WDIR_850_min = cos(new_Obs$WDIR_850mb_6hrlymin),
-  sin_WDIR_850_min = sin(new_Obs$WDIR_850mb_6hrlymin))
+  sin_WDIR_850_min = sin(new_Obs$WDIR_850mb_6hrlymin),
+  sfccape_pow_0.2max = new_Obs$Surface_CAPE_0mabovegnd_6hrlymax^0.2,
+  mucape_pow_0.2max = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax^0.2,
+  sfccape_pow_0.2min = new_Obs$Surface_CAPE_0mabovegnd_6hrlymin^0.2,
+  mucape_pow_0.2min = new_Obs$Surface_CAPE_35mabovegnd_6hrlymin^0.2)
 
 new_Obs = cbind(new_Obs, newpredictors)
 
