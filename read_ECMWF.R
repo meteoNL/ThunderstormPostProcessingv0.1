@@ -100,7 +100,24 @@ newpredictors = data.frame(
   sfccape_pow_0.2max = new_Obs$Surface_CAPE_0mabovegnd_6hrlymax^0.2,
   mucape_pow_0.2max = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax^0.2,
   sfccape_pow_0.2min = new_Obs$Surface_CAPE_0mabovegnd_6hrlymin^0.2,
-  mucape_pow_0.2min = new_Obs$Surface_CAPE_35mabovegnd_6hrlymin^0.2)
+  mucape_pow_0.2min = new_Obs$Surface_CAPE_35mabovegnd_6hrlymin^0.2,
+  CAPE_CIN_addmax = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax,
+  CAPE_CIN_pow_0.5max <- ifelse(CAPE_CIN_addmax<0,0,CAPE_CIN_addmax),
+  SWEAT_sfc_max_pow0.2 = new_Obs$SWEAT_0mabovegnd_6hrlymax^0.2,
+  abs_helicity_pow0.1_max = abs(new_Obs$Helicity_0mabovegnd_6hrlymax)^0.1,
+  abs_helicity_pow0.1_min = abs(new_Obs$Helicity_0mabovegnd_6hrlymin)^0.1,
+  mod_Jeff_pow0.2_max_0replace <- ifelse(new_Obs$modJefferson_0mabovegnd_6hrlymax<0,0,modJefferson_0mabovegnd_6hrlymax^0.2),
+  mod_Jeff_pow0.2_min_0replace <- ifelse(new_Obs$modJefferson_0mabovegnd_6hrlymin<0,0,modJefferson_0mabovegnd_6hrlymin^0.2),
+  logPWmax = PW2,
+  logPWmin = log(new_Obs$PrecipitableWater_0mabovegnd_6hrlymin),
+  Theta_w850_max_pow0.2 = new_Obs$theataW_850mb_6hrlymax^0.2,
+  Theta_w850_min_pow0.2 = new_Obs$theataW_850mb_6hrlymin^0.2,
+  ff300.x_pow0.2 = new_Obs$ff300.x^0.2,
+  ff300.y_pow0.2 = new_Obs$ff300.y^0.2,
+  ta5010.x_pow2 = new_Obs$ta5010.x^2,
+  ta5010.y_pow2 = new_Obs$ta5010.y^2,
+  )
+
 
 new_Obs = cbind(new_Obs, newpredictors)
 
