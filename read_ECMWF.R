@@ -115,7 +115,7 @@ newpredictors = data.frame(
   ff300.x_pow0.2 = new_Obs$ff300.x^0.2,
   ff300.y_pow0.2 = new_Obs$ff300.y^0.2,
   ta5010.x_pow2 = new_Obs$ta5010.x^2,
-  ta5010.y_pow2 = new_Obs$ta5010.y^2,
+  ta5010.y_pow2 = new_Obs$ta5010.y^2
   )
 
 
