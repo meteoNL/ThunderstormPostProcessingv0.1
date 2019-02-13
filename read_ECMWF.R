@@ -71,6 +71,8 @@ new_Obs <- left_join(new_Obs, dataset2, by = "id")
 #### GENERATE SOME EXTRA PREDICTORS ####
 PW1 = log(new_Obs$PrecipitableWater_0mabovegnd_6hrlymax)
 PW2 = new_Obs$PrecipitableWater_0mabovegnd_6hrlymax
+CAPE_CIN_add = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
+CAPE_CIN_add_sfc = new_Obs$Surface_CAPE_0mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
 hprecipsqrtmax = new_Obs$Rain_0mabovegnd_6hrlymax
 newpredictors = data.frame(
   Boyden_PW1 = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*PW1,
@@ -101,8 +103,10 @@ newpredictors = data.frame(
   mucape_pow_0.2max = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax^0.2,
   sfccape_pow_0.2min = new_Obs$Surface_CAPE_0mabovegnd_6hrlymin^0.2,
   mucape_pow_0.2min = new_Obs$Surface_CAPE_35mabovegnd_6hrlymin^0.2,
-  CAPE_CIN_addmax = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax,
-  CAPE_CIN_pow_0.5max <- ifelse(CAPE_CIN_addmax<0,0,CAPE_CIN_addmax),
+  CAPE_CIN_addmax = CAPE_CIN_add,
+  CAPE_CIN_addmax_sfc = CAPE_CIN_add_sfc,
+  CAPE_CIN_pow_0.5max <- ifelse(CAPE_CIN_add<0,0,CAPE_CIN_add),
+  CAPE_CIN_pow_0.5sfc <- ifelse(CAPE_CIN_add_sfc<0,0,CAPE_CIN_add_sfc),
   SWEAT_sfc_max_pow0.2 = new_Obs$SWEAT_0mabovegnd_6hrlymax^0.2,
   abs_helicity_pow0.1_max = abs(new_Obs$Helicity_0mabovegnd_6hrlymax)^0.1,
   abs_helicity_pow0.1_min = abs(new_Obs$Helicity_0mabovegnd_6hrlymin)^0.1,
