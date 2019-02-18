@@ -152,7 +152,7 @@ for (y in years){
   }
   q = q + 1
 }
-#this table contains all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
+#this table will contain all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv") #this file is very very large
 
