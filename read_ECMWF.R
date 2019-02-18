@@ -3,28 +3,39 @@ library(dplyr)
 ## READING ECMWF DATA ###
 setwd("/usr/people/groote/ThunderstormPostProcessingv1")
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/ECWMF_Data2")
+
+# get all the regions and lead times
 xreg = c("W","M","E")
 yreg = c("XN","MN","MS","XS")
 fperiods = seq(9,27,3)
 dataset = data.frame()
+
+# loop over ECMWF data available
 for (period in fperiods){
   region = 1
   for(yregion in yreg){
     for (xregion in xreg){
       name = sprintf("ECMO12_FP0%02d_%1s_%2s_1013.dat",period,xregion,yregion)
       print(name)
-      #print(name)
       first=read.csv(name, sep = "\t", header = TRUE)
+      
+      # read year, month, day from file
       year = round((first[1])/10000,0)
       month = round(round(first[1]-10000*round(first[1]/10000,0),0)/100,0)
       day = round(first[1]-100*round(first[1]/100),0)
       df= data.frame(Region = region, Year = year, Month = month, Day = day, VT = sprintf("VT_%02d%02d", (9+period)%%24, (15+period)%%24), leadtimeH = sprintf("%02d-%02d", (period-9), (period-3)), first)
+      
+      #adjust column names; leadtimeH is harmonie lead time belonging to the ECMWF file (6 hours less +/- 3 hours from the central point in interval)
       colnames(df) = c("region","Year","Month","Day", "VT", "leadtimeH", names(first))
       dataset = rbind(df,dataset)
+      
+      #go to next region
       region = region + 1
     }
   }
 }
+
+# same as above, but for different file names at different lead times
 fperiods = seq(30,39,3)
 dataset2 = data.frame()
 for (period in fperiods){
@@ -47,6 +58,7 @@ for (period in fperiods){
 }
 
 ## GENERATING IDS FOR COMBINING DATAFRAMES ####
+# id gives unique characteristics of the record: combining region, date, lead time and valid time
 dataset2 = data.frame(dataset2, id = paste("id", dataset2$region, dataset2$Year, dataset2$Month, dataset2$Day, dataset2$VT, dataset2$leadtimeH))
 dataset = data.frame(dataset, id = paste("id", dataset$region, dataset$Year, dataset$Month, dataset$Day, dataset$VT, dataset$leadtimeH))
 
@@ -58,6 +70,7 @@ dataset[dataset == 99999] <- NA
 setwd("/usr/people/groote")
 
 ### USE OLD DATA FRAME AND COMBINE WITH IDS ####
+# read old dataframe from file and get similar ids as are above for the ECMWF files
 Test = read.csv("Thunderstorm_radar_merged.csv")
 Test$id = paste(Test$id, Test$leadtime)
 Test$id = as.character(Test$id)
@@ -65,15 +78,28 @@ dataset2$id = as.character(dataset2$id)
 dataset$id = as.character(dataset$id)
 dataset = data.frame(dataset, leadtime = dataset$leadtimeH)
 dataset2 = data.frame(dataset2, leadtime = dataset2$leadtimeH)
+#and merge datasets
 new_Obs <- left_join(Test, dataset, by = "id")
 new_Obs <- left_join(new_Obs, dataset2, by = "id")
 
 #### GENERATE SOME EXTRA PREDICTORS ####
+# use PW
 PW1 = log(new_Obs$PrecipitableWater_0mabovegnd_6hrlymax)
 PW2 = new_Obs$PrecipitableWater_0mabovegnd_6hrlymax
+#combine CAPE And CIN
 CAPE_CIN_add = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
 CAPE_CIN_add_sfc = new_Obs$Surface_CAPE_0mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
+#combine harmonie precip
 hprecipsqrtmax = new_Obs$Rain_0mabovegnd_6hrlymax
+#some stepwise predictors
+stepwise_first = (new_Obs$modJefferson_0mabovegnd_6hrlymax > 32.5) + (PW2 > 44)
+conditional_first = (new_Obs$modJefferson_0mabovegnd_6hrlymax > 32.5) * (PW2 > 44)
+#transform Ri number
+cnst_RItrans = 1e-5
+RIindex=c(seq(36,37),seq(78,79))
+new_Obs[RIindex] = log(cnst_RItrans+new_Obs[RIindex])
+
+# some predictors and combined predictors in new dataframe
 newpredictors = data.frame(
   Boyden_PW1 = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*PW1,
   Boyden_PW2 = (new_Obs$Boyden_0mabovegnd_6hrlymax-85)*PW2,
@@ -119,11 +145,16 @@ newpredictors = data.frame(
   ff300.x_pow0.2 = new_Obs$ff300.x^0.2,
   ff300.y_pow0.2 = new_Obs$ff300.y^0.2,
   ta5010.x_pow2 = new_Obs$ta5010.x^2,
-  ta5010.y_pow2 = new_Obs$ta5010.y^2
+  ta5010.y_pow2 = new_Obs$ta5010.y^2,
+  stepwise_Inst_PW = stepwise_first,
+  stepwise_Inst_PW_rain = stepwise_first + (new_Obs$Rain_0mabovegnd_6hrlymax > 5), 
+  conditional_Inst_PW = conditional_first,
+  conditional_Inst_PW_rain = conditional_first * (new_Obs$Rain_0mabovegnd_6hrlymax > 5),
+  new_Obs[RIindex]
   )
 
-
+# merge with old dataframe
 new_Obs = cbind(new_Obs, newpredictors)
 
-## WRITE NEW DATASET #### 
+## WRITE NEW DATASET TO FILE #### 
 write.csv(new_Obs, "ECMWF_merged3.csv")
