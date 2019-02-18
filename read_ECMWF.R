@@ -155,6 +155,7 @@ newpredictors = data.frame(
 
 # merge with old dataframe
 new_Obs = cbind(new_Obs, newpredictors)
+names(new_Obs)[241:244]=paste0(names(new_Obs)[241:244],"_transformedlog+cnst")
 
 ## WRITE NEW DATASET TO FILE #### 
 write.csv(new_Obs, "ECMWF_merged3.csv")
