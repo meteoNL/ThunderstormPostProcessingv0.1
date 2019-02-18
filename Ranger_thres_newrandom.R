@@ -41,7 +41,7 @@ overall_scores_quan = data.frame()
 importances_dataset = data.frame()
 
 ### Functions defined: ####
-qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
+qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
   #this function does the full QRF fitting procedure, elimination and predictions with test data
 
   #declare some names to save results
@@ -141,7 +141,7 @@ for (y in years){
         varindex = orig_varindex
 
         #apply QRF fitting procedures
-        result = qrf_procedure(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
+        result = qrf_procedure_thres(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
 
         #save predictions for ENS CRPS and Brier Skill Score calculation
         overall_scores = rbind(overall_scores, result$overall_scores_local)
