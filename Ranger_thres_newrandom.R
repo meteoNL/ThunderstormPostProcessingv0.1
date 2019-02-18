@@ -42,7 +42,7 @@ importances_dataset = data.frame()
 
 ### Functions defined: ####
 qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexset, m_hyp, ntree_hyp, node_size_hyp, min_length_setting, wval, yval){
-  #this function does the full QRF fitting procedure, elimination and predictions with test data
+  #this function does the full QRF fitting procedure for threshold predictions, elimination and predictions with test data
 
   #declare some names to save results
   overall_scores_local = data.frame()
