@@ -19,10 +19,11 @@ p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
 nmembers = 10 #number of ensemble members to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = c(6,10,15,25,36,50)
-thres_eval = 20 #precipitation threshold for evaluation
-minpredictant = 1.5 #minimum precipitation sum considered as precipitation
+thres = c(6,10,15,25,36,50) #thresholds used for training
+thres_eval = 40 #discharge threshold for evaluation
+minpredictant = 1.5 #minimum sum of discharges considered as thunderstorm case
 
+#read data, years, VT, LT and regions. Change VT, LT and regions for subset fitting.
 setwd("/usr/people/groote/")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
@@ -31,7 +32,7 @@ LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = unique(ObsPV$validtime.x)[2]
 regions = c(unique(ObsPV$region))#[1:2]
 
-#change radarmax into other name if necessary:
+#selection from dataset
 climset = filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtime_count == LT)
 
 #do transformations for thresholds
@@ -41,20 +42,14 @@ thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
 #set available variables & predictant
-varindex=c(seq(18,71),seq(73,76),seq(80,82),seq(85,101))
+varindex=c(seq(18,35),seq(38,71),seq(73,76),seq(80,82),seq(85,101))
 pot_preds=names(climset[varindex])
 ind_predictant = 113
 
-##
-#transformations Richardson numbers (otherwise this script for now protests; more transformations will be done in different script)
-cnst_RItrans = 1e-5
-RIindex=c(seq(36,37),seq(78,79))
-climset[RIindex] = log(cnst_RItrans+climset[RIindex])
-plot(climset[RIindex])
-##
-
+### Above this point, the settings for a run have been defined!! #####
+### Functions defined ####
 fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train_thresholds, used_preds = c(0)){
-  #selects the best predictor by forward fittng, trying potential predictors and selecting the one with lowest AIC
+  #this function selects the best predictor by forward fittng; trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]), thresholds = train_thresholds)
@@ -65,15 +60,18 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
 }
 
 new_verify_ELR <- function(test_set, model, predictant, test_threshold, npred, reliabilityplot = FALSE){
+
+  #get observations
   observed = data.frame(observation = as.numeric(test_set[predictant]>test_threshold))
 
-  #predict with model and verify, calculate bs
+  #predict with model to do the verification
   values <- as.numeric(1-predict(model, newdata = test_set, type = "cumprob", test_threshold))
   result = data.frame(observation = observed, probability = values, npredictors = npred, threshold = test_threshold)
   return(result)
 }
 
 getEnsCRPS <- function(model, test_set, members, observations){
+  #this function calculates the ensemble CRPS score, making use of quantiles and inverting the ELR model that it gets
   quans = (seq(members)-0.5)/members # these are the quantiles to be computed with given number of members
   logtrans = log(1/quans - 1)
   logtrans = matrix(rep(logtrans, each = dim(test_set)[1]), ncol = members) #repetition of transformed quantiles in matrix
@@ -105,11 +103,11 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     return("failed")
   }
 
-  #select the best predictor and add to first model
+  #select the best predictor and add to first model in list of variables
   added = fit_test_all_pot_pred(train_set, predictant, pot_pred_indices, train_thresholds)
   variables = c(variables, added)
 
-  #add this model to the model list
+  #add this first model with best predictor variable to the model list
   firstmodel = hxlr(reformulate(termlabels = names(data.frame(train_set[variables])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[variables]), thresholds = train_thresholds)
   modellist = list(firstmodel)
   n_variables = append(n_variables, length(variables))
@@ -119,17 +117,17 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     #update potential predictors remaining
     remaining_indices = pot_pred_indices[!pot_pred_indices%in%variables]
 
-    #get best new predictor variable and add to variables
+    #get best new predictor variable and add to variables and save the index
     added = fit_test_all_pot_pred(train_set, predictant, remaining_indices, train_thresholds, used_preds = variables)
     variables = c(variables, added)
 
-    #add model based on these variables to model list
+    #add model based on these variables to model list, including number of variables in the model
     bestmodel = hxlr(reformulate(termlabels = names(data.frame(train_set[variables])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[variables]), thresholds = train_thresholds)
     modellist = append(modellist, list(bestmodel))
     n_variables = append(n_variables, length(variables))
   }
 
-  #select model and apply verification result with verification model per region
+  #select model (with accompanying number of variables) and put its predictions for verification in a data frame
   for (i in seq(modellist)){
     model_ver = modellist[[i]]
     n_variables_i = n_variables[i]
@@ -137,11 +135,12 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     for(j in seq(length(test_thresholds))){
       test_threshold = test_thresholds[j]
       verified_set = rbind(verified_set, new_verify_ELR(test_set, model_ver, predictant, test_threshold, n_variables_i, reliabilityplot = FALSE))
+      #calculate model Ensemble CRPS-score
       crpsscores = append(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
     }
   }
 
-  #add to results list
+  #add results (model, its predictions and its CRPS-score) to results list
   results$models = modellist
   results$crpsscores = crpsscores
   results$verification = verified_set
@@ -149,15 +148,20 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
 }
 
 # -----------------------------------------------------------------------------
+### End of the functions ####
 
 brierdataframe = data.frame()
 models = list()
 crpsscorelist = list()
 
 q = 1
+
+#do procedure for 9-fold cross validation: select two years of data from data frame
 for(y in years){
   train_fin = filter(climset, Year != y)
   set.seed(15+seq(years)[q]) #for reproducability purposes
+
+  #make three data sets for about 2/3 vs. 1/3 of the days within 2 years data set
   testdf = data.frame(validdate = unique(train_fin$validdate), subset = round(runif(unique(train_fin$validdate))*numsubset+0.5))
   train_sub <- left_join(train_fin, testdf, by = names(testdf)[1])
   #train_sub = cbind(train_fin, subset = randomsubset)
@@ -167,36 +171,44 @@ for(y in years){
     print(relweight_subset)
     print(j)
 
-    #select training and testing dataset
+    #finally select training and testing dataset
     train_j = filter(train_sub, subset != j)[seq(length(climset))]
     test_j = filter(train_sub, subset == j)[seq(length(climset))]
 
-    #find a fit
+    #find fitting models with the function
     result = fit_extended_logitModels(train_j, test_j, predictant = ind_predictant, pot_pred_indices = varindex,
                                       train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
     # print(result$briers)
 
-    #put results in dataframes and vectors
+    #put results (predictions, models and CRPS-score) in dataframes and vectors
     brierdataframe = rbind(brierdataframe, result$verification)
-
     models = append(models, result$models)
     crpsscorelist = append(crpsscorelist, result$crpsscores)
   }
-  q = q+1 #update seed set
+  q = q+1 #update seed set for the next year in 9-fold
 }
+
+# final cross validation section
 
 models2 = list()
 crpsscorelist2 = list()
 brierdataframe2 = data.frame()
 for(y in years){
+  #select two out of three years each time
   test_fin = filter(climset, Year == y)
   train_fin = filter(climset, Year != y)
+
+  #apply function to find models with given training sets
   result = fit_extended_logitModels(train_fin, test_fin, predictant = ind_predictant, pot_pred_indices = varindex,
                                     train_thresholds = thres, test_thresholds = thres_eval, maxnumbervars = maxvars)
+
+  #calculate results: models, verification and CRPS-scores
   brierdataframe2 = rbind(brierdataframe2, data.frame(result$verification))
   crpsscorelist2 = append(crpsscorelist2, result$crpsscores)
   models2 = append(models2, result$models)
 }
+
+# plot a reliability plot with separate line for each number of predictors
 nr=max(brierdataframe2$npredictors)
 plot.new()
 for(pred in unique(brierdataframe2$npredictors)){
@@ -212,6 +224,8 @@ for(pred in unique(brierdataframe2$npredictors)){
 }
 text(0.05,1.02,"No. of predictors:")
 
+#calculate Brier Skill Scores for each number of predictors with threshold for both 9-fold and final cross validation
+#for final cross validation, a 2 is added in each name (see above)
 thescores=data.frame()
 for(npred in unique(brierdataframe$npredictors)){
   for(thres in unique(brierdataframe$threshold)){
@@ -223,6 +237,8 @@ for(npred in unique(brierdataframe$npredictors)){
     thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thres, ss_9fold = score, ss_years = score2))
   }
 }
+
+#plot, print and write to CSV
 plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
 write.csv(thescores, "ELR_scores2.csv")
