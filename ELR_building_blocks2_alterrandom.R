@@ -209,20 +209,43 @@ for(y in years){
 }
 
 # plot a reliability plot with separate line for each number of predictors
-nr=max(brierdataframe2$npredictors)
-plot.new()
-for(pred in unique(brierdataframe2$npredictors)){
-  subset = filter(brierdataframe2, npredictors == pred)
-  print(dim(subset))
-  if(pred == 1){
-    plot(data.frame(verify(subset$obs, subset$prob)[[8]],verify(subset$obs, subset$prob)[[9]]), xlim = 0:1, ylim = 0:1, legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability", ylab = "Observed relative frequency", main = "Reliability plot thresholds")
-  }else{
-    lines(verify(subset$obs,subset$prob)[[8]],verify(subset$obs,subset$prob)[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2)#, col = c(1-0.1*pred,1,1))
+nr=max(brierdataframe2$npred)
+for(reg in regions){
+  plot.new()
+  barplotdata = data.frame()
+  for(pred in unique(brierdataframe2$npred)){
+    subset = filter(brierdataframe2, npred == pred, region == reg)
+
+    #get data for verification plot
+    verified = verify(subset$obs, subset$prob)
+    barplotdata = rbind(barplotdata, verified[[10]])
+    names(barplotdata) = verified[[8]]
+
+    #and then plot
+    par(mar=c(4,4,4,24))
+    if(pred == 1){
+      plot(data.frame(verified[[8]],verified[[9]]), xlim = c(0, 1), ylim = c(0, 1),
+           legend.names = pred,
+           col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability (-)", ylab = "Observed relative frequency (-)",
+           main = paste0("Reliability plot 0/1, region = ", reg))
+
+    }else{
+      lines(verified[[8]],verified[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, main = "lineplot")#, col = c(1-0.1*pred,1,1))
+    }
+    lines(c(0,1),c(0,1))
+    legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
   }
-  abline(0,1)
-  legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
+  barplotdata[is.na(barplotdata)]<-0
+  text(0.12,1.05,"No. of predictors:")
+  par(mar=c(4,24,4,4))
+  subplot(plot(data.frame(rep(verified[[8]],each=maxsteps),unlist(barplotdata)),
+               ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
+               ylab = "Relative forecasting frequency (-)",
+               col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
+          x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
+  text(0.8,1.05,"No. of predictors:")
+  legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 }
-text(0.05,1.02,"No. of predictors:")
 
 #calculate Brier Skill Scores for each number of predictors with threshold for both 9-fold and final cross validation
 #for final cross validation, a 2 is added in each name (see above)
