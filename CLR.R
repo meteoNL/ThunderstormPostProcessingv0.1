@@ -5,6 +5,7 @@
 #####
 # This model type was used to compare with extended logistic regression
 # Testing part is left out
+# This is script lacking proper comments every few lines
 ####
 
 ### LOAD EXTERNAL CODE
