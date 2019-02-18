@@ -16,16 +16,15 @@ usethis::use_testthat()
 setwd("/usr/people/groote/")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
+
+# get years, regions, VT and LT in data set and set values for selection/subset to fit
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
 VT = unique(ObsPV$validtime)[2]
 regions = c(unique(ObsPV$region))
-threshold = 1.50
+threshold = 1.50 #number of discharges threshold for thunderstorm case
 
-#ObsPV = cbind(ObsPV, log(0.01+ObsPV$LidStrength_0mabovegnd_6hrlymin/ObsPV$PrecipitableWater_0mabovegnd_6hrlymax))
-
-
-#set default available variables: predictant and predictor
+#set default available variables: predictant and predictor indices and number subsets, max number of predictors etc
 numsubset = 3 #number of subsets for hyperparametersetting
 ind_predictant = 107
 varindex=c(seq(18,101))
@@ -33,25 +32,32 @@ pot_preds=names(ObsPV[varindex])
 ndec = 4
 maxsteps = 6
 
+### Above this point, the settings for a run have been defined!! #####
+### Functions defined: ####
 verify_LRmodel_per_reg <- function(train_set, test_set, model, predictant, nstepsAIC, thres){
+  # this function predicts model outcomes for each model setting and discriminates by region
   predictions = data.frame()
 
   if (length(train_set) != length(test_set)){
     message("Training and test sets have to have the same number of columns")
     return("Failed")
   }
+
+  # read observations
   observed = as.numeric(test_set[predictant] > thres)
+
+  # do predictions with the model and convert it to appropriate probability of lightning
   values <- predict(model, newdata = test_set)
   probability = exp(values)/(1+exp(values))
-  #last_brier = brier(observed, probability, bins = FALSE)$bs #alternative with bins - - verification_set$bs
-  predictions = data.frame(prob = probability, obs = observed, npred = nstepsAIC, region = test_set$region)#append(briers, c(y, nstepsAIC, reg, round(last_brier, ndec)))
-  return(predictions)
 
+  # make data frame with predicted thunderstorm probability, observations, region and number of predictors (all used for verification)
+  predictions = data.frame(prob = probability, obs = observed, npred = nstepsAIC, region = test_set$region)
+  return(predictions)
 }
 
 fit_logitModels_and_predict <- function(train_set, test_set, region_set = regions, predictant = ind_predictant, pot_pred_indices = varindex,
                                         thres = threshold, maxstepsAIC = 10, print_conf = FALSE){
-
+  # this function does the fitting procedure
   if(maxstepsAIC > length(pot_pred_indices)){
     message("You can not add more variables to the model than the number of available predictors")
     return("Failed")
@@ -60,24 +66,26 @@ fit_logitModels_and_predict <- function(train_set, test_set, region_set = region
   #do the reference fit
   nullfit = glm(unlist(train_set[predictant] > thres) ~ 1, data = train_set[pot_pred_indices], family=binomial)
 
-  #results storage
+  #results storage space declared
   modellist = list()
   briers = data.frame()
   results = list()
 
-  #stepwise LR model fitting
+  #stepwise LR model fitting procedure
   for (nstepsAIC in seq(maxstepsAIC)){
     logitMod = stepAIC(nullfit, scope = list(upper = lm(unlist(train_set[predictant] > thres) ~ .,
                                                         data=train_set[pot_pred_indices]),
                                              lower = ~ 1), trace = 0, steps=nstepsAIC)
+    #optionally print confidence interval (which is based on independence assumptions between predictors that won't be realistic)
     if(print_conf == TRUE){
       conf=exp(confint.default(logitMod))
       print(conf)
     }
 
+    #do predictions with the model and get outcomes
     verification_result = verify_LRmodel_per_reg(train_set, test_set, logitMod, predictant, nstepsAIC, thres)
 
-    #make lists of model, probabilities and brier scores including skill score
+    #make lists of model and predicted probabilities which is later used for the scores
     modellist = append(modellist,list(logitMod))
     briers = rbind(briers, verification_result)
   }
@@ -88,17 +96,22 @@ fit_logitModels_and_predict <- function(train_set, test_set, region_set = region
   results$nullfit = list(nullfit)
   return(results)
 }
+#-------------------------------------
+### End of the functions ####
 
 #create memory for models and their evaluation
 brierdataframe = data.frame()
 models = list()
 nullfits = list()
 q = 1
+#do procedure for 9-fold cross validation: select two years of data from data frame
 for(y in years){
 
   #create random subsets to train on
   train_fin = filter(ObsPV, Year.x != y & validtime.x == VT & leadtime_count == LT)
   set.seed(15+seq(years)[q]) #for reproducability purposes
+
+  #make three data sets for about 2/3 vs. 1/3 of the days within 2 years data set
   testdf = data.frame(validdate = unique(train_fin$validdate), subset = round(runif(unique(train_fin$validdate))*numsubset+0.5))
   train_sub <- left_join(train_fin, testdf, by = names(testdf)[1])
 
@@ -108,14 +121,14 @@ for(y in years){
     print(relweight_subset)
     print(j)
 
-    #select training and testing dataset
+    #select training and testing dataset for each model
     train_j = filter(train_sub, subset != j)[seq(length(ObsPV))]
     test_j = filter(train_sub, subset == j)[seq(length(ObsPV))]
 
-    #find a fit
+    #do the fits
     result = fit_logitModels_and_predict(train = train_j, test = test_j, region_set = regions, predictant = ind_predictant, pot_pred_indices = varindex, thres = threshold, maxstepsAIC = maxsteps, print_conf = FALSE)
 
-    #put results in dataframes and vectors
+    #calculate results: models, verification/predictions
     brierdataframe = rbind(brierdataframe, result$briers)
     models = append(models, result$model)
     nullfits = append(nullfits, result$nullfit)
@@ -124,22 +137,29 @@ for(y in years){
 }
 
 brierdataframe2 = data.frame()
+# final cross validation section
 for(y in years){
+  #select two of the three years of data
   train_fin = filter(ObsPV, Year.x != y & validtime.x == VT & leadtime_count == LT)
   test_fin = filter(ObsPV, Year.x == y & validtime.x == VT & leadtime_count == LT)
+
+  #do the fitting procedure
   result = fit_logitModels_and_predict(train_set = train_fin, test_set = test_fin,
                                        predictant = ind_predictant, pot_pred_indices = varindex,
                                        thres = 3.00, maxstepsAIC = maxsteps, print_conf = FALSE)
+  #calculate results: models, verification/predictions
   brierdataframe2 = rbind(brierdataframe2, result$briers)
   models = append(models, result$model)
   nullfits = append(nullfits, result$nullfit)
 }
 
+#calculate brier scores and skill scores
 LR_ss <- brierdataframe %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$ss)
 LR_bs <- brierdataframe %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$bs)
 LR_ss2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$ss)
 LR_bs2 <- brierdataframe2 %>% group_by(npred, region) %>% summarise(bs = brier(obs = obs, pred = prob, bins = FALSE)$bs)
 
+#make reliability plot
 nr=max(brierdataframe2$npred)
 for(reg in regions){
   plot.new()
@@ -159,6 +179,9 @@ for(reg in regions){
   }
   text(0.05,1.02,"No. of predictors:")
 }
+
+write.csv(LR_ss, "LR_9fold_scores.csv")
+write.csv(LR_ss2, "LR_final_scores.csv")
 
 # --------------------------------------------------
 test_that("Test dataset complete?", {
