@@ -19,7 +19,10 @@ p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
 nmembers = 10 #number of ensemble members to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = c(6,10,15,25,36,50) #thresholds used for training
+#percentiles of lightning intensities used for training
+percmin = 60
+percmax = 90
+percint = 5
 thres_eval = 40 #discharge threshold for evaluation
 minpredictant = 1.5 #minimum sum of discharges considered as thunderstorm case
 
@@ -37,7 +40,7 @@ climset = filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtim
 
 #do transformations for thresholds
 climset$Dischargerate = climset$Dischargerate^p
-thres = thres^p
+thres = quantile(climset$Dischargerate,seq(percmin,percmax,percint)/100)
 thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
@@ -251,13 +254,13 @@ for(reg in regions){
 #for final cross validation, a 2 is added in each name (see above)
 thescores=data.frame()
 for(npred in unique(brierdataframe$npredictors)){
-  for(thres in unique(brierdataframe$threshold)){
-    subset = filter(brierdataframe, npredictors == npred, threshold == thres)
-    subset2 = filter(brierdataframe2, npredictors == npred, threshold == thres)
+  for(thresh in unique(brierdataframe$threshold)){
+    subset = filter(brierdataframe, npredictors == npred, threshold == thresh)
+    subset2 = filter(brierdataframe2, npredictors == npred, threshold == thresh)
     score = brier(subset$observation, subset$probability, bins = FALSE)$ss
     print(score)
     score2 = brier(subset2$observation, subset2$probability, bins = FALSE)$ss
-    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thres, ss_9fold = score, ss_years = score2))
+    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thresh, ss_9fold = score, ss_years = score2))
   }
 }
 
