@@ -281,14 +281,14 @@ for(pred in unique(brierdataframe2$npredictors)){
   legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
 }
 barplotdata[is.na(barplotdata)]<-0
-text(0.12,1.05,"No. of predictors:")
+text(0.14,1.05,"No. of predictors:")
 par(mar=c(4,28,4,4))
 subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
              ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
              ylab = "Relative forecasting frequency (-)",
              col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
         x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
-text(0.8,1.05,"No. of predictors:")
+text(0.8,1.02,"No. of predictors:")
 legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 #calculate Brier Skill Scores for each number of predictors with threshold for both 9-fold and final cross validation
 #for final cross validation, a 2 is added in each name (see above)
