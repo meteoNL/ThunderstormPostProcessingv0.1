@@ -301,9 +301,9 @@ testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), 
 thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
 model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
 test_that("Testing function fit_test_all_pot_pred",{
-  expect_equal(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 32), 30)
-  expect_error(fit_test_all_pot_pred(train_j, 8, 30, thres, used_preds = 30))
-  expect_error(fit_test_all_pot_pred(train_j, 450, 30, thres, used_preds = 32))
+  expect_equal(fit_test_all_pot_pred(train_j, 8, 30, c(5,10,15), used_preds = 32), 30)
+  expect_error(fit_test_all_pot_pred(train_j, 8, 30, c(5,10,15), used_preds = 30))
+  expect_error(fit_test_all_pot_pred(train_j, 450, 30, c(5,10,15), used_preds = 32))
 })
 
 test_that("Testing function fit_extended_logitModels ",{
