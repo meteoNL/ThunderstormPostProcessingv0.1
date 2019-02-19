@@ -19,7 +19,9 @@ p = 0.25 #power transformation to linearize thresholds
 maxvars = 3
 nmembers = 10 #number of members/quantiles to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
-thres = c(4,6,10,15,25,36,50,70,100)
+percmin = 60
+percmax = 90
+percint = 5
 thres_eval = 20 #discharge threshold for evaluation
 minpredictant = 1.5 #minimum number of discharges sum considered as thunderstorm occurence
 
@@ -37,7 +39,7 @@ climset = filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtim
 
 #do transformations for thresholds
 climset$Dischargerate = climset$Dischargerate^p
-thres = thres^p
+thres = quantile(climset$Dischargerate,seq(percmin,percmax,percint)/100)
 thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
