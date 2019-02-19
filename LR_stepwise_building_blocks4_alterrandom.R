@@ -201,7 +201,7 @@ for(reg in regions){
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/HELRres")
 write.csv(LR_ss,paste0("LR_scores_9fold_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 write.csv(LR_ss2,paste0("LR_scores_fin_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
-saveRDS(models, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex),".csv"))
+saveRDS(models, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
 # --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime.x == VT & leadtime_count == LT) %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
