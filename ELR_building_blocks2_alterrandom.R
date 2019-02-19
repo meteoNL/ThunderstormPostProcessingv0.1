@@ -264,7 +264,8 @@ for(npred in unique(brierdataframe$npredictors)){
 #plot, print and write to CSV
 plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
-write.csv(thescores, "ELR_scores2.csv")
+setwd("/usr/people/groote/ThunderstormPostProcessingv1/ELRres")
+write.csv(thescores,paste0("ELR_scores_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 #-----------------------------------------------------------------
 ## Testing the functions
 library(devtools)
