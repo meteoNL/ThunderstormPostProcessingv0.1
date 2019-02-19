@@ -292,12 +292,12 @@ for(reg in regions){
 #for final cross validation, a 2 is added in each name (see above)
 thescores=data.frame()
 for(npred in unique(brierdataframe2$npredictors)){
-  for(thres in unique(brierdataframe2$threshold)){
-    subset = filter(brierdataframe, npredictors == npred, threshold == thres)
-    subset2 = filter(brierdataframe2, npredictors == npred, threshold == thres)
+  for(thresh in unique(brierdataframe2$threshold)){
+    subset = filter(brierdataframe, npredictors == npred, threshold == thresh)
+    subset2 = filter(brierdataframe2, npredictors == npred, threshold == thresh)
     score = brier(subset$observation, subset$probability, bins = FALSE)$ss
     score2 = brier(subset2$observation, subset2$probability, bins = FALSE)$ss
-    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thres, ss_9fold = score, ss_years = score2))
+    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thresh, ss_9fold = score, ss_years = score2))
   }
 }
 #plot, print and write to CSV
