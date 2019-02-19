@@ -272,7 +272,7 @@ for(pred in unique(brierdataframe2$npredictors)){
     plot(data.frame(verified[[8]],verified[[9]]), xlim = c(0, 1), ylim = c(0, 1),
          legend.names = pred,
          col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability (-)", ylab = "Observed relative frequency (-)",
-         main = paste0("Reliability plot 0/1, region = ", reg))
+         main = paste0("Reliability plot thresholds at ",thres_eval^4," dis./5 min."))
 
   }else{
     lines(verified[[8]],verified[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, main = "lineplot")#, col = c(1-0.1*pred,1,1))
