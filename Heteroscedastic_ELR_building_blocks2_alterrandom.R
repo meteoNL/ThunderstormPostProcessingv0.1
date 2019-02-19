@@ -7,6 +7,7 @@
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
+library(Hmisc)
 library(verification)
 library(SpecsVerification)
 library(arm)
