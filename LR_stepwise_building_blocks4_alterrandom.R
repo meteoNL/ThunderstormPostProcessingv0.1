@@ -189,7 +189,7 @@ for(reg in regions){
   barplotdata[is.na(barplotdata)]<-0
   text(0.12,1.05,"No. of predictors:")
   par(mar=c(4,24,4,4))
-  subplot(plot(data.frame(rep(verified[[8]],each=maxsteps),unlist(barplotdata)),
+  subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
                ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
                ylab = "Relative forecasting frequency (-)",
                col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
