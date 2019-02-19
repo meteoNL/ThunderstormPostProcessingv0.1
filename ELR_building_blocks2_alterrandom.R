@@ -297,7 +297,7 @@ test_that("Transformation with power p - check", {
 
 y = years[1]
 regions = c(1)
-testthat_df = data.frame(a=(seq(10,20)+2*rnorm(11)),b=seq(20,40,2),d=rnorm(11), region = rep(1,11))
+testthat_df = data.frame(a=(seq(10,20,0.02)+2*rnorm(501)),b=seq(20,40,0.04),d=rnorm(501), region = rep(1,501))
 thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
 model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
 test_that("Testing function fit_test_all_pot_pred",{
