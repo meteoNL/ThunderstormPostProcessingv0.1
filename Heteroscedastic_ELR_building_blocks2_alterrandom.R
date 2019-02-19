@@ -305,5 +305,5 @@ plot(thescores$numpredictors, thescores$ss_years)
 print(thescores)
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/HELRres")
 write.csv(thescores,paste0("HELR_scores_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
-saveRDS(models2, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex),".csv"))
+saveRDS(models2, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
 #-----------------------------------------------------------------
