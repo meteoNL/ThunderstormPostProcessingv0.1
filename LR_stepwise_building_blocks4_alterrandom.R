@@ -198,9 +198,9 @@ for(reg in regions){
   legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 }
 
-write.csv(LR_ss, "LR_9fold_scores.csv")
-write.csv(LR_ss2, "LR_final_scores.csv")
-
+setwd("/usr/people/groote/ThunderstormPostProcessingv1/HELRres")
+write.csv(LR_ss,paste0("LR_scores_9fold_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
+write.csv(LR_ss2,paste0("LR_scores_fin_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 # --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime.x == VT & leadtime_count == LT) %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
