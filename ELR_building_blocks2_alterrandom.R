@@ -139,9 +139,9 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
     for(j in seq(length(test_thresholds))){
       test_threshold = test_thresholds[j]
       verified_set = rbind(verified_set, new_verify_ELR(test_set, model_ver, predictant, test_threshold, n_variables_i, reliabilityplot = FALSE))
-      #calculate model Ensemble CRPS-score
-      crpsscores = append(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
     }
+    #calculate model Ensemble CRPS-score
+    crpsscores = append(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
   }
 
   #add results (model, its predictions and its CRPS-score) to results list
