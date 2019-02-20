@@ -173,7 +173,7 @@ for(reg in regions){
     names(barplotdata) = verified[[8]]
 
     #and then plot
-    par(mar=c(4,4,4,24))
+    par(mar=c(4,4,4,28))
     if(pred == 1){
       plot(data.frame(verified[[8]],verified[[9]]), xlim = c(0, 1), ylim = c(0, 1),
            legend.names = pred,
@@ -187,21 +187,25 @@ for(reg in regions){
     legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
   }
   barplotdata[is.na(barplotdata)]<-0
-  text(0.12,1.05,"No. of predictors:")
-  par(mar=c(4,24,4,4))
+  text(0.12,1.02,"No. of predictors:")
+  par(mar=c(4,28,4,4))
   subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
                ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
                ylab = "Relative forecasting frequency (-)",
                col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
           x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
-  text(0.8,1.05,"No. of predictors:")
+  text(0.8,1.02,"No. of predictors:")
   legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 }
 
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/LRres")
 write.csv(LR_ss,paste0("LR_scores_9fold_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 write.csv(LR_ss2,paste0("LR_scores_fin_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
-saveRDS(models, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
+submodels = list()
+for(i in seq(9*maxsteps+1,12*maxsteps)){
+  submodels = append(submodels, models[[i]]$coefficients)
+}
+saveRDS(submodels, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
 # --------------------------------------------------
 test_that("Test dataset complete?", {
   expect_equal(filter(ObsPV, validtime.x == VT & leadtime_count == LT) %>% arrange(Year, Month, Day), rbind(train_fin, test_fin) %>% arrange(Year, Month, Day))
