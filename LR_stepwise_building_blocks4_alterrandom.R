@@ -198,7 +198,7 @@ for(reg in regions){
   legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 }
 
-setwd("/usr/people/groote/ThunderstormPostProcessingv1/HELRres")
+setwd("/usr/people/groote/ThunderstormPostProcessingv1/LRres")
 write.csv(LR_ss,paste0("LR_scores_9fold_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 write.csv(LR_ss2,paste0("LR_scores_fin_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 saveRDS(models, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
