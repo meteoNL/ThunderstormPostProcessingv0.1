@@ -187,7 +187,7 @@ for(reg in regions){
     legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
   }
   barplotdata[is.na(barplotdata)]<-0
-  text(0.12,1.02,"No. of predictors:")
+  text(0.15,1.02,"No. of predictors:")
   par(mar=c(4,28,4,4))
   subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
                ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
