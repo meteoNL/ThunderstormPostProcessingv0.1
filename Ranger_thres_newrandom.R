@@ -20,6 +20,7 @@ minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 numbsubset = 3
+nmem = 10 #number of members for ensemble CRPS
 
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
 years = c(as.numeric(unique(ObsPV$Year.x)))
@@ -69,7 +70,7 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
     print(remove_variable)
 
     #evaluate continuous ranked probability score
-    qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(5,95,10)/100)$predictions
+    qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(0.5,nmem-0.5)/nmem)$predictions
     qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
     ######
 
