@@ -171,10 +171,10 @@ for(val in unique(overall_scores_quan$newcol)){
 }
 
 #write all scores and list with important predictors for all of the models to a file
-write.csv(qrf_ss, file="qrf_thresholds_ss_imp_newrandom.csv")
-write.csv(qrf_bs, file="qrf_thresholds_bs_imp_newrandom.csv")
-write.csv(qrf_crps, file="qrf_thresholds_crps_imp_newrandom.csv")
-write.csv(importances_dataset, "imp.csv")
+write.csv(qrf_ss, file=paste0("qrf_thresholds_ss_imp_newrandom_",VT,"_LT_",LT,".csv"))
+write.csv(qrf_bs, file=paste0("qrf_thresholds_bs_imp_newrandom_",VT,"_LT_",LT,".csv"))
+write.csv(qrf_crps, file=paste0("qrf_thresholds_crps_imp_newrandom_",VT,"_LT_",LT,".csv"))
+write.csv(importances_dataset, file=paste0("imp_",VT,"_LT_",LT,".csv"))
 
 #-----------------------------------------------------------------
 ## Testing the functions
