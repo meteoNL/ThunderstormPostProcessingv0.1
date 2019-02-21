@@ -138,9 +138,9 @@ qrf_ss <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summa
 qrf_bs <- overall_scores %>% group_by(region, npred, mtry, min_n_size) %>% summarise(bs = brier(obs = occurence, pred = prob, bins = FALSE)$bs)
 
 #write them to files
-write.csv(qrf_ss, file="qrf_ss_imp_newrandom.csv")
-write.csv(qrf_bs, file="qrf_bs_imp_newrandom.csv")
-write.csv(importances_df, file="importances_newrandom.csv")
+write.csv(qrf_ss, file=paste0("qrf_ss_imp_newrandom_",VT,"_LT_",LT,".csv"))
+write.csv(qrf_bs, file=paste0("qrf_bs_imp_newrandom_",VT,"_LT_",LT,".csv"))
+write.csv(importances_df, file=paste0("importances_newrandom_",VT,"_LT_",LT,".csv"))
 
 #-----------------------------------------------------------------
 ## Testing the functions
