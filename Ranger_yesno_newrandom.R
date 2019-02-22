@@ -32,7 +32,7 @@ climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT)
 # set indices of the predictors and predictand
 occurence = as.numeric(climset[107]>minpredictant)
 climset = data.frame(climset, occurence)
-orig_varindex = c(seq(18,101))
+orig_varindex = c(seq(18,37),seq(39,79),seq(81,101))
 predictant_ind = 114
 
 ### Above this point, the settings for a run have been defined!! #####
