@@ -65,6 +65,10 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
+  if(length(added)>1){
+    added=added[1]
+    print(added)
+  }
   return(added)
 }
 
@@ -80,6 +84,10 @@ fit_test_all_pot_pred_no_sc <- function(train_set, predictant, pot_pred_indices,
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
+  if(length(added)>1){
+    added=added[1]
+    print(added)
+  }
   return(added)
 }
 fit_test_all_pot_pred_sc <- function(train_set, predictant, pot_pred_indices, train_thresholds, used_preds = c(0), used_sc_preds = c(0)){
@@ -95,6 +103,10 @@ fit_test_all_pot_pred_sc <- function(train_set, predictant, pot_pred_indices, tr
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
+  if(length(added)>1){
+    added=added[1]
+    print(added)
+  }
   return(added)
 }
 new_verify_ELR <- function(test_set, model, predictant, test_threshold, npred, reliabilityplot = FALSE){
