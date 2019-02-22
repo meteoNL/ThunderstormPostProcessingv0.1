@@ -46,7 +46,7 @@ thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
 #set available variables & predictant
-varindex=c(seq(18,35),seq(38,71),seq(73,76),seq(80,82),seq(85,101))
+varindex=c(seq(18,35),seq(39,71),seq(73,76),seq(81,82),seq(85,101))
 pot_preds=names(climset[varindex])
 ind_predictant = 113
 
@@ -60,6 +60,10 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
     AICscores = append(AICscores,AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
+  if(length(added)>1){
+    added=added[1]
+    print(added)
+  }
   return(added)
 }
 
