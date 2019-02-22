@@ -27,7 +27,7 @@ threshold = 1.50 #number of discharges threshold for thunderstorm case
 #set default available variables: predictant and predictor indices and number subsets, max number of predictors etc
 numsubset = 3 #number of subsets for hyperparametersetting
 ind_predictant = 107
-varindex=c(seq(18,101))
+varindex=c(seq(18,37),seq(39,79),seq(81,101))
 pot_preds=names(ObsPV[varindex])
 ndec = 4
 maxsteps = 6
