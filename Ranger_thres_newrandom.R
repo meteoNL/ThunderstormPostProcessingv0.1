@@ -171,6 +171,9 @@ for(val in unique(overall_scores_quan$newcol)){
   newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:nmem]),as.numeric(unlist(subset[nmem+1])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
   qrf_crps = rbind(qrf_crps, newscore)
 }
+refcrps = mean(EnsCrps(t(matrix(rep(t(climset[predictant_ind]),dim(climset[predictant_ind])[1]), nrow=dim(climset[predictant_ind])[1])),as.matrix(climset[predictant_ind])))
+sksc=1-(qrf_crps$crps)/refcrps
+qrf_crps = cbind(qrf_crps, skillscore = sksc)
 
 #write all scores and list with important predictors for all of the models to a file
 write.csv(qrf_ss, file=paste0("qrf_thresholds_ss_imp_newrandom_",VT,"_LT_",LT,".csv"))
