@@ -34,7 +34,7 @@ climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT & Ndischarge >
 orig_varindex = c(seq(18,37),seq(39,79),seq(81,101))
 predictant_ind = 113
 climset[predictant_ind]=climset[predictant_ind]^p
-thres_eval = c(10,20,40)
+thres_eval = seq(1.8,3.0,0.05)^4
 
 ### Above this point, the settings for a run have been defined!! #####
 # declare some names
