@@ -20,6 +20,7 @@ minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
 ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
 numbsubset = 3
+p=0.25
 nmem = 10 #number of members for ensemble CRPS
 
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
@@ -32,6 +33,7 @@ climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT & Ndischarge >
 # initial predictor set containing all predictors; predictand and evaluation thresholds
 orig_varindex = c(seq(18,37),seq(39,79),seq(81,101))
 predictant_ind = 113
+climset[predictant_ind]=climset[predictant_ind]^p
 thres_eval = c(10,20,40)
 
 ### Above this point, the settings for a run have been defined!! #####
