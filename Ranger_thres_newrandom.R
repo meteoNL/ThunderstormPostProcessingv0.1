@@ -30,7 +30,7 @@ regions = c(unique(ObsPV$region.x))
 climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT & Ndischarge > minpredictant)
 
 # initial predictor set containing all predictors; predictand and evaluation thresholds
-orig_varindex = c(seq(18,101))
+orig_varindex = c(seq(18,37),seq(39,79),seq(81,101))
 predictant_ind = 113
 thres_eval = c(10,20,40)
 
