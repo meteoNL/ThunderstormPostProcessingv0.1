@@ -17,13 +17,13 @@ rm(list=ls(all=TRUE))
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
 p = 0.25 #power transformation to linearize thresholds
-maxvars = 3
+maxvars = 4
 nmembers = 10 #number of members/quantiles to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
-percmin = 60
-percmax = 90
+percmin = 50
+percmax = 95
 percint = 5
-thres_eval = 20 #discharge threshold for evaluation
+thres_eval = seq(1.8,3.0,0.05)^4 #discharge threshold for evaluation
 minpredictant = 1.5 #minimum number of discharges sum considered as thunderstorm occurence
 
 #read data, years, VT, LT and regions. Change VT, LT and regions for subset fitting.
@@ -67,7 +67,6 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
   if(length(added)>1){
     added=added[1]
-    print(added)
   }
   return(added)
 }
@@ -132,7 +131,8 @@ getEnsCRPS <- function(model, test_set, members, observations){
   modelpred = modelpred/model$coefficients$intercept[2]
 
   #calculate ensemble CRPS
-  result = mean(EnsCrps(as.matrix(modelpred), observations))
+  result = modelpred/model$coefficients$intercept[2]
+  result = cbind(result, npredictors = length(model$coefficients$location)+length(model$coefficients$scale), observations)
   return(result)
 }
 
@@ -145,7 +145,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
   verified_set = data.frame()
   results = list()
   n_variables = c()
-  crpsscores = c()
+  crpsscores = data.frame()
 
   if(maxnumbervars > length(pot_pred_indices)){
     message("You can not add more variables to the model than the number of available predictors")
@@ -197,7 +197,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
       verified_set = rbind(verified_set, new_verify_ELR(test_set, model_ver, predictant, test_threshold, n_variables_i, reliabilityplot = FALSE))
     }
     #calculate model Ensemble CRPS-score
-    crpsscores = append(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
+    crpsscores = rbind(crpsscores, getEnsCRPS(model_ver, test_set,nmembers, as.numeric(unlist(test_set[predictant]))))
   }
 
   #add results (model, its predictions and its CRPS-score) to results list
@@ -212,7 +212,7 @@ fit_extended_logitModels <- function(train_set, test_set, predictant = ind_predi
 
 brierdataframe = data.frame()
 models = list()
-crpsscorelist = list()
+crpsscorelist = data.frame()
 
 q = 1
 #do procedure for 9-fold cross validation: select two years of data from data frame
@@ -241,7 +241,7 @@ for(y in years){
 
     #put results (predictions, models and CRPS-score) in dataframes and vectors
     brierdataframe = rbind(brierdataframe, result$verification)
-    crpsscorelist = append(crpsscorelist, result$crpsscores)
+    crpsscorelist = rbind(crpsscorelist, result$crpsscores)
     models = append(models, result$models)
   }
   q = q+1 #update seed set
@@ -250,7 +250,7 @@ for(y in years){
 # final cross validation section
 
 models2=list()
-crpsscorelist2 = list()
+crpsscorelist2 = data.frame()
 brierdataframe2 = data.frame()
 for(y in years){
   #select two out of three years each time
@@ -263,64 +263,77 @@ for(y in years){
   #calculate results: models, verification and CRPS-scores
   brierdataframe2 = rbind(brierdataframe2, data.frame(result$verification))
   models2 = append(models2, result$models)
-  crpsscorelist2 = append(crpsscorelist2, result$crpsscores)
+  crpsscorelist2 = rbind(crpsscorelist2, result$crpsscores)
 }
-
 #make reliability plot
 nr=max(brierdataframe2$npred)
-plot.new()
-barplotdata = data.frame()
-for(pred in unique(brierdataframe2$npredictors)){
-  subset = filter(brierdataframe2, npredictors == pred)
+for(thresh in thres_eval){
+  subsetting = filter(brierdataframe2, threshold == thresh)
+  plot.new()
+  barplotdata = data.frame()
+  for(pred in unique(brierdataframe2$npredictors)){
+    subset = filter(subsetting, npredictors == pred)
 
-  #get data for verification plot
-  verified = verify(subset$obs, subset$prob)
-  barplotdata = rbind(barplotdata, verified[[10]])
-  names(barplotdata) = verified[[8]]
+    #get data for verification plot
+    verified = verify(subset$obs, subset$prob)
+    barplotdata = rbind(barplotdata, verified[[10]])
+    names(barplotdata) = verified[[8]]
 
-  #and then plot
-  par(mar=c(4,4,4,28))
-  if(pred == 1){
-    plot(data.frame(verified[[8]],verified[[9]]), xlim = c(0, 1), ylim = c(0, 1),
-         legend.names = pred,
-         col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability (-)", ylab = "Observed relative frequency (-)",
-         main = paste0("Reliability plot thresholds at ",thres_eval^4," dis./5 min."))
+    #and then plot
+    par(mar=c(4,4,4,28))
+    if(pred == 1){
+      plot(data.frame(verified[[8]],verified[[9]]), xlim = c(0, 1), ylim = c(0, 1),
+           legend.names = pred,
+           col = rainbow(nr)[pred], type = "o", lwd = 2, xlab = "Forecasted probability (-)", ylab = "Observed relative frequency (-)",
+           main = paste0("Reliability plot thresholds at interval ",round(thresh^4)," dis./5 min."))
 
-  }else{
-    lines(verified[[8]],verified[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, main = "lineplot")#, col = c(1-0.1*pred,1,1))
+    }else{
+      lines(verified[[8]],verified[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, main = "lineplot")#, col = c(1-0.1*pred,1,1))
+    }
+    lines(c(0,1),c(0,1))
+    legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
   }
-  lines(c(0,1),c(0,1))
-  legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
+  barplotdata[is.na(barplotdata)]<-0
+  text(0.14,1.02,"No. of predictors:")
+  par(mar=c(4,28,4,4))
+  subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
+               ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
+               ylab = "Relative forecasting frequency (-)",
+               col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
+          x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
+  text(0.8,1.02,"No. of predictors:")
+  legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 }
-barplotdata[is.na(barplotdata)]<-0
-text(0.14,1.05,"No. of predictors:")
-par(mar=c(4,28,4,4))
-subplot(plot(data.frame(rep(verified[[8]],each=nr),unlist(barplotdata)),
-             ylim = c(0,1),xlim=c(0,1),xlab = "Forecasted probability (-)",
-             ylab = "Relative forecasting frequency (-)",
-             col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
-        x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
-text(0.8,1.02,"No. of predictors:")
-legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
 #calculate Brier Skill Scores for each number of predictors with threshold for both 9-fold and final cross validation
 #for final cross validation, a 2 is added in each name (see above)
 thescores=data.frame()
-for(npred in unique(brierdataframe2$npredictors)){
-  for(thresh in unique(brierdataframe2$threshold)){
+crpsdata=data.frame()
+for(npred in unique(brierdataframe$npredictors)){
+  for(thresh in unique(brierdataframe$threshold)){
     subset = filter(brierdataframe, npredictors == npred, threshold == thresh)
     subset2 = filter(brierdataframe2, npredictors == npred, threshold == thresh)
     score = brier(subset$observation, subset$probability, bins = FALSE)$ss
     score2 = brier(subset2$observation, subset2$probability, bins = FALSE)$ss
-    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thresh, ss_9fold = score, ss_years = score2))
+    thescores = rbind(thescores, data.frame(numpredictors = npred, threshold = thresh^4, ss_9fold = score, ss_years = score2))
+    #crpsdata = mean(EnsCrps(subset4[-length(subset4)],subset4[length(subset4)]))
   }
+  subset3 = filter(crpsscorelist, npredictors == npred)
+  subset4 = filter(crpsscorelist2, npredictors == npred)
+  colval = length(subset4)
+  crpsdata = rbind(crpsdata, data.frame(npredictors = npred, score_9fold = mean(EnsCrps(ens = as.matrix(subset3[-c(colval-1,colval)]),obs = as.matrix(subset3[colval]))), score_years = mean(EnsCrps(ens = as.matrix(subset4[-c(colval-1,colval)]), obs = as.matrix(subset4[colval])))))
 }
+
+refcrps = mean(EnsCrps(t(matrix(rep(t(climset[ind_predictant]),dim(climset[ind_predictant])[1]), nrow=dim(climset[ind_predictant])[1])),as.matrix(climset[ind_predictant])))
+ss_years=1-(crpsdata$score_years)/refcrps
+crpsdata = cbind(crpsdata, SS = ss_years)
+print(crpsdata)
 #plot, print and write to CSV
-plot(thescores$numpredictors, thescores$ss_years)
-print(thescores)
+plot(thescores$threshold,thescores$ss_years, xlab = "Lightning intensity threshold (dis./5 min)", ylab="BSS", main = "Verification score as function of threshold", col=thescores$numpredictors, legend.names=thescores$numpredictors)
+legend(75,max(thescores$ss_years-0.02),legend=seq(nr),col=unique(thescores$numpredictors),pch=1)
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/HELRres")
-write.csv(thescores,paste0("HELR_scores_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
-crpsdata=data.frame(npred=rep(seq(1,maxvars),numsubset),crps=matrix(as.character(crpsscorelist2)))
-name = paste0("ELR_CRPSscores_",VT,"_LT_",LT,"_npred_",length(varindex),".csv")
+write.csv(thescores,paste0("ELR_scores_",VT,"_LT_",LT,"_npred_",length(varindex),".csv"))
+#crpsdata=data.frame(npred=rep(seq(1,maxvars),numsubset),crps=matrix(as.character(crpsscorelist2)))
+name = paste0("HELR_CRPSscores_",VT,"_LT_",LT,"_npred_",length(varindex),".csv")
 write.csv(crpsdata,name)
 saveRDS(models2, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
 #-----------------------------------------------------------------
