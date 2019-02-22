@@ -168,7 +168,7 @@ overall_scores_quan = data.frame(overall_scores_quan, newcol = overall_scores_qu
 qrf_crps = data.frame()
 for(val in unique(overall_scores_quan$newcol)){
   subset = filter(overall_scores_quan, newcol == val)
-  newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:10]),as.numeric(unlist(subset[11])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
+  newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:nmem]),as.numeric(unlist(subset[nmem+1])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
   qrf_crps = rbind(qrf_crps, newscore)
 }
 
