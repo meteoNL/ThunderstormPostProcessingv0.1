@@ -40,7 +40,7 @@ climset = filter(ObsPV, Ndischarge > minpredictant & validtime.x == VT & leadtim
 
 #do transformations for thresholds
 climset$Dischargerate = climset$Dischargerate^p
-thres = quantile(climset$Dischargerate,seq(percmin,percmax,percint)/100)
+thres = unique(quantile(climset$Dischargerate,seq(percmin,percmax,percint)/100))
 thres_eval = thres_eval^p
 ndec = 4 #number of decimals usedi when appending scores to list of scores
 
