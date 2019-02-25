@@ -86,7 +86,7 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
       obs = as.numeric(test_set[predictant_index] > threshold)
 
       #calculate probabilities from discrete CDF and make data frame with model settigns and regions in it
-      probs = rowMeans(fit1_pred_thres$predictions>threshold)
+      probs = rowMeans(fit1_pred_thres$predictions^4>threshold)
       qrf_pred = rbind(qrf_pred, data.frame(probability = probs, observed = obs, region = test_set["region"], thres = threshold, npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval))
     }
 
