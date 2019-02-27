@@ -157,5 +157,8 @@ newpredictors = data.frame(
 new_Obs = cbind(new_Obs, newpredictors)
 names(new_Obs)[241:244]=paste0(names(new_Obs)[241:244],"_transformedlog+cnst")
 
+###### REMOVE WRONG VALUES ######
+new_Obs <- filter(new_Obs, LCL_0mabovegnd_6hrlymax < 12500)
+
 ## WRITE NEW DATASET TO FILE #### 
 write.csv(new_Obs, "ECMWF_merged3.csv")
