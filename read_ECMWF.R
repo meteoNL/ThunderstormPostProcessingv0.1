@@ -131,8 +131,8 @@ newpredictors = data.frame(
   mucape_pow_0.2min = new_Obs$Surface_CAPE_35mabovegnd_6hrlymin^0.2,
   CAPE_CIN_addmax = CAPE_CIN_add,
   CAPE_CIN_addmax_sfc = CAPE_CIN_add_sfc,
-  CAPE_CIN_pow_0.5max <- ifelse(CAPE_CIN_add<0,0,CAPE_CIN_add),
-  CAPE_CIN_pow_0.5sfc <- ifelse(CAPE_CIN_add_sfc<0,0,CAPE_CIN_add_sfc),
+  CAPE_CIN_pow_0.5max <- ifelse(CAPE_CIN_add<0,0,CAPE_CIN_add^0.5),
+  CAPE_CIN_pow_0.5sfc <- ifelse(CAPE_CIN_add_sfc<0,0,CAPE_CIN_add_sfc^0.5),
   SWEAT_sfc_max_pow0.2 = new_Obs$SWEAT_0mabovegnd_6hrlymax^0.2,
   abs_helicity_pow0.1_max = abs(new_Obs$Helicity_0mabovegnd_6hrlymax)^0.1,
   abs_helicity_pow0.1_min = abs(new_Obs$Helicity_0mabovegnd_6hrlymin)^0.1,
@@ -159,6 +159,8 @@ names(new_Obs)[241:244]=paste0(names(new_Obs)[241:244],"_transformedlog+cnst")
 
 ###### REMOVE WRONG VALUES ######
 new_Obs <- filter(new_Obs, LCL_0mabovegnd_6hrlymax < 12500)
+new_Obs = new_Obs[2:length(new_Obs)]
+colnames(new_Obs)[1:10]=c("id","region","Year","Month","Day","validtime","radarmax","validdate","T0","leadtime")
 
 ## WRITE NEW DATASET TO FILE #### 
-write.csv(new_Obs, "ECMWF_merged3.csv")
+write.csv(new_Obs, "ECMWF_merged4.csv")
