@@ -43,7 +43,7 @@ print(dim(climset))
 occurence = as.numeric(climset[107]>minpredictant)
 climset = data.frame(climset, occurence)
 orig_varindex = varindex_shell
-predictant_ind = 245
+predictant_ind = 246
 
 ### Above this point, the settings for a run have been defined!! #####
 # declare some names
@@ -75,8 +75,8 @@ qrf_procedure <- function(train_set, test_set, predictant_index, varindexset, m_
     #remove worst variable, based on permutation
     remove_variable = varindexset[fit1$variable.importance == min(fit1$variable.importance)][1]
     varindexset = varindexset[varindexset != remove_variable]
-    print("removed variable:")
-    print(remove_variable)
+  #  print("removed variable:")
+  #  print(remove_variable)
 
     ######
     #predict with fit the probabilities and remember the five most important predictors of the fit

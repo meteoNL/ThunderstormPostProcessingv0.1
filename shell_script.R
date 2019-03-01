@@ -21,4 +21,4 @@ for(LT_i in LT_val){
   }
 }
 
-print("The tasks has been completed")
+print("The tasks have been completed")

@@ -67,6 +67,9 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   for(i in names(train_set[pot_pred_indices])){
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]), thresholds = train_thresholds)
     AICscores = append(AICscores,AIC(model))
+  #  print("----")
+  #  print(i)
+  #  print(AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]
   if(length(added)>1){
@@ -290,12 +293,14 @@ crpsdata = cbind(crpsdata, SS = ss_years)
 print(crpsdata)
 #plot, print and write to CSV
 png(file=paste0("Npred_",VT,"_LT_",LT,"_npred_",length(varindex),".png"), width=720, height = 400)
-plot(thescores$threshold,thescores$ss_9fold, xlab = "Lightning intensity threshold (dis./5 min)", ylab="BSS", main = "Verification score as function of threshold", col=thescores$numpredictors, legend.names=thescores$numpredictors)
+plot(thescores$threshold,thescores$ss_9fold, xlab = "Lightning intensity threshold (dis./5 min) - 9-fold cross validation", ylab="BSS", main = "Verification score as function of threshold", col=thescores$numpredictors, legend.names=thescores$numpredictors)
 legend(75,max(thescores$ss_9fold-0.02),legend=seq(nr),col=unique(thescores$numpredictors),pch=1)
 dev.off()
 print(length(dev.list()))
-plot(thescores$threshold,thescores$ss_years, xlab = "Lightning intensity threshold (dis./5 min)", ylab="BSS", main = "Verification score as function of threshold", col=thescores$numpredictors, legend.names=thescores$numpredictors)
+png(file=paste0("SSyears_",VT,"_LT_",LT,"_npred_",length(varindex),".png"), width=720, height = 400)
+plot(thescores$threshold,thescores$ss_years, xlab = "Lightning intensity threshold (dis./5 min) - final verification", ylab="BSS", main = "Verification score as function of threshold", col=thescores$numpredictors, legend.names=thescores$numpredictors)
 legend(75,max(thescores$ss_years-0.02),legend=seq(nr),col=unique(thescores$numpredictors),pch=1)
+dev.off()
 write.csv(thescores,paste0("ELR_scores_",VT,"_LT_",LT,"_npred_",length(varindex),".csv"))
 #crpsdata=data.frame(npred=rep(seq(1,maxvars),numsubset),crps=matrix(as.character(crpsscorelist2)))
 name = paste0("ELR_CRPSscores_",VT,"_LT_",LT,"_npred_",length(varindex),".csv")
