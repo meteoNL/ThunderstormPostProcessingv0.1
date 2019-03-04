@@ -138,7 +138,7 @@ newpredictors = data.frame(
   abs_helicity_pow0.1_min = abs(new_Obs$Helicity_0mabovegnd_6hrlymin)^0.1,
   mod_Jeff_pow0.2_max_0replace <- ifelse(new_Obs$modJefferson_0mabovegnd_6hrlymax<0,0,new_Obs$modJefferson_0mabovegnd_6hrlymax^0.2),
   mod_Jeff_pow0.2_min_0replace <- ifelse(new_Obs$modJefferson_0mabovegnd_6hrlymin<0,0,new_Obs$modJefferson_0mabovegnd_6hrlymin^0.2),
-  logPWmax = PW2,
+  logPWmax = PW1,
   logPWmin = log(new_Obs$PrecipitableWater_0mabovegnd_6hrlymin),
   Theta_w850_max_pow0.2 = new_Obs$theataW_850mb_6hrlymax^0.2,
   Theta_w850_min_pow0.2 = new_Obs$theataW_850mb_6hrlymin^0.2,
