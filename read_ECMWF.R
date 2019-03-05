@@ -90,7 +90,7 @@ PW2 = new_Obs$PrecipitableWater_0mabovegnd_6hrlymax
 CAPE_CIN_add = new_Obs$Surface_CAPE_35mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
 CAPE_CIN_add_sfc = new_Obs$Surface_CAPE_0mabovegnd_6hrlymax+new_Obs$Surface_ConvInhib_0mabovegnd_6hrlymax
 #combine harmonie precip
-hprecipsqrtmax = new_Obs$Rain_0mabovegnd_6hrlymax
+hprecipsqrtmax = new_Obs$Rain_0mabovegnd_6hrlymax^0.5
 #some stepwise predictors
 stepwise_first = (new_Obs$modJefferson_0mabovegnd_6hrlymax > 32.5) + (PW2 > 44)
 conditional_first = (new_Obs$modJefferson_0mabovegnd_6hrlymax > 32.5) * (PW2 > 44)
