@@ -228,7 +228,7 @@ write.csv(LR_ss,paste0("LR_scores_9fold_",VT,"_LT_",LT,"npred_",length(varindex)
 write.csv(LR_ss2,paste0("LR_scores_fin_",VT,"_LT_",LT,"npred_",length(varindex),".csv"))
 submodels = list()
 for(i in seq(9*maxsteps+1,12*maxsteps)){
-  submodels = append(submodels, models[[i]]$coefficients)
+  submodels = append(submodels, list(models[[i]]$coefficients))
 }
 saveRDS(submodels, paste0("Models_",VT,"_LT_",LT,"_npred_",length(varindex)))
 

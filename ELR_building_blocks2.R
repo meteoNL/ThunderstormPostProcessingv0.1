@@ -65,10 +65,13 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   #this function selects the best predictor by forward fittng; trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
+   # print(names(train_set[i]))
+  #  print(names(train_set[used_preds]))
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])), response = as.name(names(train_set[predictant]))), data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]), thresholds = train_thresholds)
     AICscores = append(AICscores,AIC(model))
   #  print("----")
   #  print(i)
+  #  print(model)
   #  print(AIC(model))
   }
   added = pot_pred_indices[unlist(AICscores[seq(length(pot_pred_indices))])==min(unlist(AICscores))]

@@ -1,6 +1,6 @@
 LT_val = seq(1,1)
 VT_val = seq(1,4)
-varindex_shell = c(seq(18,35),seq(39,42),seq(44,71),seq(73,76),seq(81,82),seq(86,101),seq(192,200),seq(203,205),seq(208,217),seq(220,230),seq(237,242))
+varindex_shell = c(seq(18,35),seq(39,42),seq(44,71),seq(73,76),seq(81,82),seq(86,101),seq(192,200),seq(203,205),seq(208,217),seq(220,230),seq(237,239),c(241,242))
 
 for(LT_i in LT_val){
   for(VT_i in VT_val){
