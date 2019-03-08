@@ -178,7 +178,7 @@ q = 1
 #do procedure for 9-fold cross validation: select two years of data from data frame
 for(y in years){
   train_fin = filter(climset, Year != y)
-  set.seed(15+seq(years)[q]) #for reproducability purposes
+  set.seed(18+seq(years)[q]) #for reproducability purposes
 
   #make three data sets for about 2/3 vs. 1/3 of the days within 2 years data set
   testdf = data.frame(validdate = unique(train_fin$validdate), subset = round(runif(unique(train_fin$validdate))*numsubset+0.5))

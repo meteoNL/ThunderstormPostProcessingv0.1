@@ -199,6 +199,7 @@ for(reg in regions){
       lines(verified[[8]],verified[[9]], legend.names = pred, col = rainbow(nr)[pred], type = "o", lwd = 2, main = "lineplot")#, col = c(1-0.1*pred,1,1))
     }
     lines(c(0,1),c(0,1))
+    SkSc = filter(LR_ss2, region == reg)$bs
     legend(0,1, legend = seq(nr), col = rainbow(nr), lty = 1, lwd = 2)
   }
   barplotdata[is.na(barplotdata)]<-0
@@ -209,15 +210,16 @@ for(reg in regions){
                ylab = "Relative forecasting frequency (-)",
                col = rainbow(nr)[seq(nr)], main = "Forecasts issued for each no. of pred.", lwd=2),
           x = c(0.0,1.0),y = c(0.0,1.0), size = c(5,5))
-  text(0.8,1.02,"No. of predictors:")
-  legend(0.75,1, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
+  text(0.75,1.02,"No. of predictors:")
+  legend(0.45,1, legend = paste0(seq(nr)," with BSS ", round(SkSc[seq(nr)],3)), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
   #dev.copy(pdf,paste0("Relplot_",VT,"_LT_",LT,"_npred_",length(varindex),"_reg_",reg,".pdf"))
   dev.off()
   print(length(dev.list()))
 }
 png(file=paste0("Npred_",VT,"_LT_",LT,"_npred_",length(varindex),".png"), width=720, height = 400)
-plot(LR_ss$npred,LR_ss$bs,col=LR_ss$region, xlab="Number of predictors (-)", ylab = "BSS",xlim=c(0,nr+2),ylim=c(-0.3,0.6), legend.names = LR_ss$region)
-legend(nr+0.5,0.5, legend = seq(nr), col = rainbow(nr), lty = 0, pch=1, lwd = 2)
+plot(LR_ss$npred,LR_ss$bs,col=rainbow(length(regions))[LR_ss$region], xlab="Number of predictors (-)", ylab = "BSS",xlim=c(0,nr+2),ylim=c(-0.3,0.6), legend.names = LR_ss$region, main ="9-fold cross validation scores")
+legend(nr+0.5,0.5, legend = seq(length(regions)), col = rainbow(length(regions)), lty = 0, pch=1, lwd = 2)
+text(7,0.55,"No. predictors")
 dev.off()
 print(length(dev.list()))
 print("dimensions of dataset - train, test")
