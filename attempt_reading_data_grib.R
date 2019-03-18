@@ -4,6 +4,7 @@
 #setwd("/net/pc150388/nobackup_1/users/stat/para/INDECS/HA40REFC/THUNFC/")
 
 # load the mepsr library from Kiri's directory
+library(meteogrid, lib.loc = "/net/pc132059/nobackup_1/users/whan/R/x86_64-redhat-linux-gnu-library/3.3/")
 library(Rgrib2, lib.loc = "/net/pc132059/nobackup_1/users/whan/R/x86_64-redhat-linux-gnu-library/3.3/")
 library(mepsr, lib.loc = "/net/pc132059/nobackup_1/users/whan/R/x86_64-redhat-linux-gnu-library/3.3/")
 library(meteogrid, lib.loc = "/net/pc132059/nobackup_1/users/whan/R/x86_64-redhat-linux-gnu-library/3.3/")
@@ -12,17 +13,18 @@ library(dplyr, lib.loc = "/net/pc132059/nobackup_1/users/whan/R/x86_64-redhat-li
 # get KOUW raster:
 setwd("/usr/people/groote")
 rasterKOUW=readRDS("harmonie_mask.rds")
-#ha40_file <- "testgrib" #path to the file you want (each file contains one date, one leadtime and all variables)
+ha40_file <- "testgrib" #path to the file you want (each file contains one date, one leadtime and all variables)
 
 # define generic domain information:
-#h40_grib_info <- Gopen(filename = ha40_file)
+h40_grib_info <- Gopen(filename = ha40_file)
 max_level = 12500
 no_cloud_value = -10
 cloud_base_classifications_lower = c(0,250, 2500, 5500)
 cloud_base_classifications_upper = c(250, 2500, 5500,15000)
 datelist = c(rep(4,16),rep(5,31),rep(6,30),rep(7,31),rep(8,31),rep(9,30),rep(10,15))*100+c(seq(15,30),seq(1,31),seq(1,30),seq(1,31),seq(1,31),seq(1,30),seq(1,15))
 datelist = rep(datelist,3)+c(rep(2015,length(datelist))*10000,rep(2016,length(datelist))*10000,rep(2017,length(datelist))*10000)
-
+datelist=datelist[seq(10,length(datelist))]
+print(datelist)
 #define column names for the data frame with GRIB data
 column_names <- c("Forecast_hours","Region","PrecipWater","Conv_cloud_cov","MSLP","Cloud_base","Graupel_col",
                   "Lightning_H40","Cloud_top","Cloud_ice","Cloud_water","Rain","Snow",
@@ -49,27 +51,34 @@ for(date in datelist){
       
       #domain data; are assumed to be always the same in both files
       domain_data <- meteogrid::DomainExtent(Gdec(Ghandle(fn1, 1)))
-      for(j in seq(1,11)){
-        geofield_data <- Gdec(Ghandle(fn1, j))
-        tmp <- raster(geofield_data, xmn=domain_data$x0, xmx=domain_data$x1, ymn=domain_data$y0, ymx=domain_data$y1)
-        column = resample(tmp, rasterKOUW)
-        # print(column)
-        
-        #combine with dataset 
-        dataset = cbind(dataset, as.vector(column))
+      if(nrow(Gopen(filename = fn1))==11){
+        for(j in seq(1,11)){
+          geofield_data <- Gdec(Ghandle(fn1, j))
+          tmp <- raster(geofield_data, xmn=domain_data$x0, xmx=domain_data$x1, ymn=domain_data$y0, ymx=domain_data$y1)
+          column = resample(tmp, rasterKOUW)
+          # print(column)
+          
+          #combine with dataset 
+          dataset = cbind(dataset, as.vector(column))
+        }
+      } else{
+        dataset = cbind(dataset, data.frame(matrix(NA, ncol = 11, nrow = nrow(dataset))))
       }
       # read the files for different forecasting hours & put them on the KOUW grid for GWI
-      for(j in seq(1,46)){
-        fn2 = sprintf("GWI/HA40_GWI_%08d000000_%02d00_GB",date,i)
-        #print(getwd())
-        geofield_data <- Gdec(Ghandle(fn2, j))
-        tmp <- raster(geofield_data, xmn=domain_data$x0, xmx=domain_data$x1, ymn=domain_data$y0, ymx=domain_data$y1)
-        column = resample(tmp, rasterKOUW)
-        
-        #combine with dataset
-        dataset = cbind(dataset, as.vector(column))
+      fn2 = sprintf("GWI/HA40_GWI_%08d000000_%02d00_GB",date,i)
+      if(nrow(Gopen(filename = fn2))==46){
+        for(j in seq(1,46)){
+          #print(getwd())
+          geofield_data <- Gdec(Ghandle(fn2, j))
+          tmp <- raster(geofield_data, xmn=domain_data$x0, xmx=domain_data$x1, ymn=domain_data$y0, ymx=domain_data$y1)
+          column = resample(tmp, rasterKOUW)
+          
+          #combine with dataset
+          dataset = cbind(dataset, as.vector(column))
+        }
+      } else{
+        dataset = cbind(dataset, data.frame(matrix(NA, ncol = 46, nrow = nrow(dataset))))
       }
-      
       #remove impossible LFC, LNB
       dataset[dataset$LFC > max_level] = NA
       dataset[dataset$LNB > max_level] = NA
@@ -79,7 +88,7 @@ for(date in datelist){
       colnames(dataset) <- column_names
       
       #add extra predictors on KOUW grid
-      extra_predictors = data.frame(Bradbury_base925 = dataset$ThetaW_925-dataset$ThetaW_500,ThetaW_925_850_diff = dataset$ThetaW_925-dataset$ThetaW_850, U_500 = sin(dataset$WDIR_500)*dataset$WSPD_500, V_500 = cos(dataset$WDIR_500)*dataset$WSPD_500, U_850 = sin(dataset$WDIR_850)*dataset$WSPD_850, V_850 = cos(dataset$WDIR_850)*dataset$WSPD_850)
+      extra_predictors = data.frame(Bradbury_base925 = dataset$ThetaW_925-dataset$ThetaW_500,ThetaW_925_850_diff = dataset$ThetaW_925-dataset$ThetaW_850, U_500 = -sin(dataset$WDIR_500/360*2*pi)*dataset$WSPD_500, V_500 = -cos(dataset$WDIR_500/360*2*pi)*dataset$WSPD_500, U_850 = -sin(dataset$WDIR_850/360*2*pi)*dataset$WSPD_850, V_850 = -cos(dataset$WDIR_850/360*2*pi)*dataset$WSPD_850)
       extra_predictors = cbind(extra_predictors, data.frame(Bulk_shear_850_500 = ((extra_predictors$U_850-extra_predictors$U_500)^2 + (extra_predictors$V_850-extra_predictors$V_500)^2)^0.5,
                                                             Bulk_shear_850_700 = ((extra_predictors$U_850-dataset$U_700)^2 + (extra_predictors$V_850-dataset$V_700)^2)^0.5,
                                                             Cloud_layers_depth = dataset$Cloud_top-dataset$Cloud_base))
@@ -128,7 +137,7 @@ for(date in datelist){
     }
     cloud_base_matrix = t(matrix(cloud_base_vector, ncol = length(unique(quantilesperregion$Region))))
     colnrs_base = c(seq(1,4),seq(6,9),seq(11,15))
-    print(data.frame(cloud_base_matrix)[colnrs_base])
+    #print(data.frame(cloud_base_matrix)[colnrs_base])
     quantilesperregion = cbind(quantilesperregion, data.frame(cloud_base_matrix)[colnrs_base])
     #give names to the potential predictors
     colnames(quantilesperregion) <- c(names(quantilesperregion[1:(length(quantilesperregion)-13)]),
@@ -139,9 +148,9 @@ for(date in datelist){
     # replace no cloud cases with negative values for cloud base, top and depth to distinguish
     quantilesperregion[quantilesperregion$No_clouds==TRUE,c(seq(42,49),seq(66,73),seq(450,457),seq(538,545))]<- no_cloud_value
     quantilesperregion = cbind(Init_date = date, quantilesperregion)
-    print(quantilesperregion[seq(1,40)])
+    #print(quantilesperregion[seq(1,40)])
     overall_frame = rbind(overall_frame, quantilesperregion)
-    print(overall_frame[seq(1,40)])
-    
+    #print(overall_frame[seq(1,40)])
+    write.csv(overall_frame,"/usr/people/groote/Dataset_00z_predictors.csv")
   }
 }  
