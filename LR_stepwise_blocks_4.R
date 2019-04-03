@@ -22,19 +22,23 @@ print(VT_i)
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #read dataset
 setwd("/usr/people/groote/")
-ObsPV = read.csv(file = "ECMWF_merged4.csv")
+ObsPV = read.csv(file = "full_final00z_dataset2.csv")
+colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
+ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
+ObsPV <- filter(ObsPV, region < 25)
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 
 # get years, regions, VT and LT in data set and set values for selection/subset to fit
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
-VT = unique(ObsPV$validtime)[VT_i]
+VT ="Init_00z"# unique(ObsPV$validtime)[VT_i]
 regions = c(unique(ObsPV$region))
 threshold = 1.50 #number of discharges threshold for thunderstorm case
 
 #set default available variables: predictant and predictor indices and number subsets, max number of predictors etc
 numsubset = 3 #number of subsets for hyperparametersetting
-ind_predictant = 107
+ind_predictant = 625
 varindex=varindex_shell
 pot_preds=names(ObsPV[varindex])
 ndec = 4
@@ -113,7 +117,8 @@ brierdataframe = data.frame()
 models = list()
 nullfits = list()
 q = 1
-ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+#ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
 
 #do procedure for 9-fold cross validation: select two years of data from data frame
 for(y in years){
