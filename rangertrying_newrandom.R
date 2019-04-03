@@ -25,25 +25,31 @@ node_size_settings = c(3, 9, 15)#50
 # import the data frame and generate training and testing set
 minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
-ObsPV = read.csv(file = "ECMWF_merged4.csv")
+ObsPV = read.csv(file = "full_final00z_dataset2.csv")
+colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
+ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
+ObsPV <- filter(ObsPV, region < 25, Ndischarge > -100) #last one to prevent issues for missing values
 #ObsPV <- filter(ObsPV, region != 1)
 numbsubset = 3
 
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
-VT = unique(ObsPV$validtime)[VT_i]
+#VT = unique(ObsPV$validtime)[VT_i]
+VT = "Init_00z"
 regions = c(unique(ObsPV$region))
-ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+#ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
 climset <- filter(ObsPV, selector == 1)
 
 print(dim(climset))
 
 # set indices of the predictors and predictand
-occurence = as.numeric(climset[107]>minpredictant)
+occurence = as.numeric(climset[625]>minpredictant)
 climset = data.frame(climset, occurence)
 orig_varindex = varindex_shell
-predictant_ind = 246
+predictant_ind = length(climset)
 
 ### Above this point, the settings for a run have been defined!! #####
 # declare some names
@@ -136,6 +142,7 @@ for (y in years){
         #save the predictions and important predictors
         overall_scores = rbind(overall_scores, result$overall_scores_local)
         importances_df = rbind(importances_df, result$importances_save)
+        write.csv(importances_df, file=paste0("importances_newrandom_",VT,"_LT_",LT,".csv"))
       }
     }
   }
