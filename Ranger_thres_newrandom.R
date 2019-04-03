@@ -1,4 +1,4 @@
-rm(list=ls(all=TRUE))
+rm(list=ls()[! ls() %in% c("LT_i","VT_i","LT_val","VT_val","varindex_shell")])
 # load libraries:
 # if they need to be installed that can be done by: install.packages("dplyr")
 library(dplyr)
@@ -9,6 +9,13 @@ library(ggplot2)
 library(tree)
 library(SpecsVerification)
 
+print("rangerthres active for")
+print("LT_i equals:")
+print(LT_i)
+print("------")
+print("VT_i equals:")
+print(VT_i)
+
 #hyperparameters settings
 numbtree = 500
 m_settings = c(2, 6, 10)
@@ -18,23 +25,29 @@ node_size_settings = c(3, 9, 15)#50
 # import the data frame and generate training and testing set
 minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
-ObsPV = read.csv(file = "Thunderstorm_radar_merged.csv")
+ObsPV = read.csv(file = "full_final00z_dataset2.csv")
+colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
+ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
+nmem = 10 #number of members for ensemble CRPS
 numbsubset = 3
 p=0.25
-nmem = 10 #number of members for ensemble CRPS
 
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
-years = c(as.numeric(unique(ObsPV$Year.x)))
-LT = c(as.numeric(unique(ObsPV$leadtime_count)))[1]
-VT = unique(ObsPV$validtime.x)[2]
-regions = c(unique(ObsPV$region.x))
-climset <- filter(ObsPV, validtime.x == VT & leadtime_count == LT & Ndischarge > minpredictant)
+years = c(as.numeric(unique(ObsPV$Year)))
+LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
+#VT = unique(ObsPV$validtime)[VT_i]
+VT = "Init_00z"
+regions = c(unique(ObsPV$region))
+#ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+climset <- filter(ObsPV, selector == 1 & Ndischarge > minpredictant)
 
 # initial predictor set containing all predictors; predictand and evaluation thresholds
-orig_varindex = c(seq(18,37),seq(39,79),seq(81,101))
-predictant_ind = 113
+orig_varindex = varindex_shell
+predictant_ind = 627
+thres_eval = seq(2.5,4.5,0.25)^4
 climset[predictant_ind]=climset[predictant_ind]^p
-thres_eval = seq(1.8,3.0,0.05)^4
 
 ### Above this point, the settings for a run have been defined!! #####
 # declare some names
@@ -68,12 +81,12 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
     #remove worst variable, based on permutation
     remove_variable = varindexset[fit1$variable.importance == min(fit1$variable.importance)][1]
     varindexset = varindexset[varindexset != remove_variable]
-    print("removed variable:")
-    print(remove_variable)
+   # print("removed variable:")
+  #  print(remove_variable)
 
     #evaluate continuous ranked probability score
-    qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(0.5,nmem-0.5)/nmem)$predictions
-    qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
+    #qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(0.5,nmem-0.5)/nmem)$predictions
+    #qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
     ######
 
     qrf_pred = data.frame()
@@ -86,7 +99,7 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
       obs = as.numeric(test_set[predictant_index]^(1/p) > threshold)
 
       #calculate probabilities from discrete CDF and make data frame with model settigns and regions in it
-      probs = rowMeans(fit1_pred_thres$predictions^(1/p) > threshold)
+      probs = rowMeans(fit1_pred_thres$predictions^(1/p)>threshold)
       qrf_pred = rbind(qrf_pred, data.frame(probability = probs, observed = obs, region = test_set["region"], thres = threshold, npred = (length(varindexset)+1), mtry = m_hyp, effmtry = min(m_hyp, (length(varindexset)+1)), min_n_size = node_size_hyp, w = wval, y = yval))
     }
 
@@ -98,13 +111,13 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
 
     #add predictions (probabilities & ensemble members for CRPS) for this number of predictors to other predictions for any number of predictors and the most important predictors
     overall_scores_local = rbind(overall_scores_local, qrf_pred)
-    overall_quan = rbind(overall_quan, qrf_pred_quan)
+    #overall_quan = rbind(overall_quan, qrf_pred_quan)
     importances_save = rbind(importances_save, test_importance_save)
   }
 
   #return results for all numbers of predictors
   result$overall_scores_local = overall_scores_local
-  result$overall_quan = overall_quan
+  #result$overall_quan = overall_quan
   result$importances_save = importances_save
   return(result)
 }
@@ -148,37 +161,37 @@ for (y in years){
 
         #save predictions for ENS CRPS and Brier Skill Score calculation
         overall_scores = rbind(overall_scores, result$overall_scores_local)
-        overall_scores_quan = rbind(overall_scores_quan, result$overall_quan)
+        #overall_scores_quan = rbind(overall_scores_quan, result$overall_quan)
         importances_dataset = rbind(importances_dataset, result$importances_save)
       }
     }
   }
   q = q + 1
 }
-#this table will contain all brier scores for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
+#this table will contain for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
 #write.csv(overall_scores, file = "overall scores3.csv") #this file is very very large
 
 #calculate Brier Skill Score
 qrf_ss <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = observed, pred = probability, bins = FALSE)$ss)
 qrf_bs <- overall_scores %>% group_by(npred, mtry, min_n_size, thres) %>% summarise(bs = brier(obs = observed, pred = probability, bins = FALSE)$bs)
-overall_scores_quan = data.frame(overall_scores_quan, newcol = overall_scores_quan$npred*10000+overall_scores_quan$mtry*100+overall_scores_quan$min_n_size)
+#overall_scores_quan = data.frame(overall_scores_quan, newcol = overall_scores_quan$npred*10000+overall_scores_quan$mtry*100+overall_scores_quan$min_n_size)
 
 #calculate CRPS score
 qrf_crps = data.frame()
-for(val in unique(overall_scores_quan$newcol)){
-  subset = filter(overall_scores_quan, newcol == val)
-  newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:nmem]),as.numeric(unlist(subset[nmem+1])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
-  qrf_crps = rbind(qrf_crps, newscore)
-}
-refcrps = mean(EnsCrps(t(matrix(rep(t(climset[predictant_ind]),dim(climset[predictant_ind])[1]), nrow=dim(climset[predictant_ind])[1])),as.matrix(climset[predictant_ind])))
-sksc=1-(qrf_crps$crps)/refcrps
-qrf_crps = cbind(qrf_crps, skillscore = sksc)
+#for(val in unique(overall_scores_quan$newcol)){
+#  subset = filter(overall_scores_quan, newcol == val)
+#  newscore = data.frame(crps = mean(EnsCrps(as.matrix(subset[1:nmem]),as.numeric(unlist(subset[nmem+1])))), npred = round(val/10000), mtry = round(val%%10000/100), min_n_size=val%%100)
+#  qrf_crps = rbind(qrf_crps, newscore)
+#}
+#refcrps = mean(EnsCrps(t(matrix(rep(t(climset[predictant_ind]),dim(climset[predictant_ind])[1]), nrow=dim(climset[predictant_ind])[1])),as.matrix(climset[predictant_ind])))
+#sksc=1-(qrf_crps$crps)/refcrps
+#qrf_crps = cbind(qrf_crps, skillscore = sksc)
 
 #write all scores and list with important predictors for all of the models to a file
 write.csv(qrf_ss, file=paste0("qrf_thresholds_ss_imp_newrandom_",VT,"_LT_",LT,".csv"))
 write.csv(qrf_bs, file=paste0("qrf_thresholds_bs_imp_newrandom_",VT,"_LT_",LT,".csv"))
-write.csv(qrf_crps, file=paste0("qrf_thresholds_crps_imp_newrandom_",VT,"_LT_",LT,".csv"))
+#write.csv(qrf_crps, file=paste0("qrf_thresholds_crps_imp_newrandom_",VT,"_LT_",LT,".csv"))
 write.csv(importances_dataset, file=paste0("imp_",VT,"_LT_",LT,".csv"))
 
 #-----------------------------------------------------------------
@@ -210,3 +223,4 @@ test_that("Random subset numbers",{
   expect_equal(min(testdf$subset),1)
   expect_equal(max(testdf$subset),3)
 })
+
