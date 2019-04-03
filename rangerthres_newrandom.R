@@ -25,7 +25,10 @@ node_size_settings = c(3, 9, 15)#50
 # import the data frame and generate training and testing set
 minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
-ObsPV = read.csv(file = "ECMWF_merged4.csv")
+ObsPV = read.csv(file = "full_final00z_dataset2.csv")
+colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
+ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
 nmem = 10 #number of members for ensemble CRPS
 numbsubset = 3
 p=0.25
@@ -33,15 +36,17 @@ p=0.25
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
-VT = unique(ObsPV$validtime)[VT_i]
+#VT = unique(ObsPV$validtime)[VT_i]
+VT = "Init_00z"
 regions = c(unique(ObsPV$region))
-ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+#ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
 climset <- filter(ObsPV, selector == 1 & Ndischarge > minpredictant)
 
 # initial predictor set containing all predictors; predictand and evaluation thresholds
 orig_varindex = varindex_shell
-predictant_ind = 113
-thres_eval = seq(1.8,3.0,0.05)^4
+predictant_ind = 627
+thres_eval = seq(2.5,4.5,0.25)^4
 climset[predictant_ind]=climset[predictant_ind]^p
 
 ### Above this point, the settings for a run have been defined!! #####
