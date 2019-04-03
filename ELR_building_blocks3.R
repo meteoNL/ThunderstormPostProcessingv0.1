@@ -4,7 +4,7 @@
 
 #######
 
-rm(list=ls()[! ls() %in% c("LT_i","VT_i","LT_val","VT_val","varindex_shell")])
+rm(list=ls()[! ls() %in% c("LT_i","VT_i","LT_val","VT_val","varindex_shell","pct_min_val","pct_min")])
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
@@ -20,7 +20,7 @@ print("LT_i equals:")
 print(LT_i)
 print("------")
 print("VT_i equals:")
-print(VT_i)
+#print(VT_i)
 
 ### SET GENERAL CONDITIONS FOR THE MODEL
 #set thresholds and hyperparameter; determine test dataset and training dataset
@@ -29,23 +29,33 @@ maxvars = 4
 nmembers = 10 #number of ensemble members to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
 #thresholds used for training; percentiles
-percmin = 60
+percmin = pct_min
 percmax = 95
 percint = 5
-thres_eval = seq(1.8,3.0,0.1)^4 #discharge threshold for evaluation
+thres_eval = seq(2.5,4.5,0.25)^4 #discharge threshold for evaluation
 minpredictant = 1.5 #minimum sum of discharges considered as thunderstorm case
 
 #read data, years, VT, LT and regions. Change VT, LT and regions for subset fitting.
 setwd("/usr/people/groote/")
-ObsPV = read.csv(file = "ECMWF_merged4.csv")
+ObsPV = read.csv(file = "full_final00z_dataset2.csv")
+colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
+ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
-VT = unique(ObsPV$validtime)[VT_i]
+#VT = unique(ObsPV$validtime)[VT_i]
+VT = paste0("Init_00z",pct_min)
 regions = c(unique(ObsPV$region))#[1:2]
 
+###
+ObsPV$MSLP_mean = ObsPV$MSLP_mean - 100000
+ObsPV$MSLP_max = ObsPV$MSLP_max - 100000
+###
+
 #selection from dataset
-ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+#ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
+ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
 climset = filter(ObsPV, Ndischarge > minpredictant & selector == 1)
 print(dim(climset))
 #do transformations for thresholds
@@ -57,7 +67,7 @@ ndec = 4 #number of decimals usedi when appending scores to list of scores
 #set available variables & predictant
 varindex=varindex_shell
 pot_preds=names(climset[varindex])
-ind_predictant = 113
+ind_predictant = 627
 
 ### Above this point, the settings for a run have been defined!! #####
 ### Functions defined: ####
@@ -65,8 +75,8 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   #this function selects the best predictor by forward fittng; trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
-   # print(names(train_set[i]))
-  #  print(names(train_set[used_preds]))
+    print(names(train_set[i]))
+    print(names(train_set[used_preds]))
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])),
                                        response = as.name(names(train_set[predictant]))),
                            data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]),
@@ -338,7 +348,7 @@ testthat_df = data.frame(a=(seq(10,20,0.02)+2*rnorm(501)),b=seq(20,40,0.04),d=rn
 thresholds_testthat = c(quantile(testthat_df$a,0.25)[[1]],quantile(testthat_df$a,0.95)[[1]])
 model_testthat = fit_extended_logitModels(train_set = testthat_df, test_set = testthat_df, predictant = 1, pot_pred_indices = c(2,3), train_thresholds = thresholds_testthat, test_thresholds = thresholds_testthat, maxnumbervars  = 1)$models
 test_that("Testing function fit_test_all_pot_pred",{
-  expect_equal(fit_test_all_pot_pred(train_j, 8, 30, c(5,10,15), used_preds = 32), 30)
+  expect_equal(fit_test_all_pot_pred(train_j, 16, 14, c(10,20,30), used_preds = 89),14)
   expect_error(fit_test_all_pot_pred(train_j, 8, 30, c(5,10,15), used_preds = 30))
   expect_error(fit_test_all_pot_pred(train_j, 450, 30, c(5,10,15), used_preds = 32))
 })
