@@ -1,4 +1,4 @@
-LT_val = seq(3,7)
+LT_val = seq(1,7)
 VT_val = seq(1,4)
 #varindex_shell = c(seq(18,35),seq(39,42),seq(44,71),seq(73,76),seq(81,82),seq(86,101),seq(192,200),seq(203,205),seq(208,217),seq(220,230),seq(237,239),c(241,242))
 #varindex_shell = c(varindex_shell,85)
@@ -20,28 +20,29 @@ varindex_shell = c(11,seq(15,18),34,42,43,49,50,65,66,74,81,90,91,seq(95,98),106
                    435,441,442,seq(460,462),seq(464,466),467,472,474,475,482,484,492,494,500,514
 )
 varindex_shell = varindex_shell+4
-varindex_shell = c(varindex_shell, seq(519,525),527,529,531,533,535,539,541,549,seq(550,588),seq(591,593),seq(595,608),623)
+varindex_shell = c(varindex_shell, seq(519,525),527,529,531,533,535,539,541,549,seq(550,588),seq(591,593),seq(602,608),623)
+
+varindex_shell2=c(varindex_shell[c(5,6,7,10,12,13,14,15,20,21,23,27,30,31,35,36,37,43,48,52,55,58,60,66,70,77,80,82,87,88,92,97,102,103,105,110,111,115,116,117,118,122,123,124,125,127,129,134,135,136,140,141,146,149,151,152,153,155,156,157,158,159,160,163,167,170,171,172,173,174,185,187,189,191,193,194,197,198,199,202,203,205,206,208,209,216)])
+varindex_shell = c(varindex_shell2, 416, 359, 526, 534)
 for(LT_i in LT_val){
-  for(VT_i in c(1)){
-    setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-    tryCatch({source("ELR_building_blocks4.R")},
-             error = function(err){print(err)
-               setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-               source("ELR_building_blocks3.R")
-               })
-    while (length(dev.list())>0){
-      dev.off()
-    }
-    # setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-    # source("LR_stepwise_blocks_4.R")
-    # while (length(dev.list())>0){
-    #   dev.off()
-    # }
-    # setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-    # source("rangerthres_newrandom.R")
-    # setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-    # source("rangertrying_newrandom.R")
+  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
+  tryCatch({source("ELR_building_blocks4.R")},
+           error = function(err){print(err)
+             setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
+             source("ELR_building_blocks3.R")
+           })
+  while (length(dev.list())>0){
+    dev.off()
   }
+  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
+  source("LR_stepwise_blocks_4.R")
+  while (length(dev.list())>0){
+    dev.off()
+  }
+  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
+  source("rangerthres_newrandom.R")
+  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
+  source("rangertrying_newrandom.R")
 }
 
 print("The tasks have been completed")

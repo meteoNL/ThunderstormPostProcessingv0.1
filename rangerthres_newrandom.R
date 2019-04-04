@@ -27,9 +27,9 @@ minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
 ObsPV = read.csv(file = "full_final00z_dataset2.csv")
 colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
-ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$leadtime_count = ObsPV$leadtime_count
 ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
-nmem = 10 #number of members for ensemble CRPS
+nmem = 25 #number of members for ensemble CRPS
 numbsubset = 3
 p=0.25
 
@@ -46,7 +46,7 @@ climset <- filter(ObsPV, selector == 1 & Ndischarge > minpredictant)
 # initial predictor set containing all predictors; predictand and evaluation thresholds
 orig_varindex = varindex_shell
 predictant_ind = 627
-thres_eval = seq(2.5,4.5,0.25)^4
+thres_eval = seq(2.5,4.5,0.125)^4
 climset[predictant_ind]=climset[predictant_ind]^p
 
 ### Above this point, the settings for a run have been defined!! #####

@@ -27,7 +27,7 @@ minpredictant = 1.5 #1.5 discharges
 setwd("/usr/people/groote")
 ObsPV = read.csv(file = "full_final00z_dataset2.csv")
 colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
-ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$leadtime_count = ObsPV$leadtime_count
 ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
 ObsPV <- filter(ObsPV, region < 25, Ndischarge > -100) #last one to prevent issues for missing values
 #ObsPV <- filter(ObsPV, region != 1)

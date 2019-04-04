@@ -4,7 +4,7 @@
 
 #######
 
-rm(list=ls()[! ls() %in% c("LT_i","VT_i","LT_val","VT_val","varindex_shell","pct_min_val","pct_min")])
+rm(list=ls()[! ls() %in% c("LT_i","VT_i","LT_val","VT_val","varindex_shell")])
 ### LOAD EXTERNAL CODE
 library(dplyr)
 library(MASS)
@@ -26,26 +26,26 @@ print("VT_i equals:")
 #set thresholds and hyperparameter; determine test dataset and training dataset
 p = 0.25 #power transformation to linearize thresholds
 maxvars = 4
-nmembers = 10 #number of ensemble members to calculate CRPS
+nmembers = 25 #number of ensemble members to calculate CRPS
 numsubset = 3 #number of subsets for hyperparameter selection
 #thresholds used for training; percentiles
-percmin = pct_min
+percmin = 50
 percmax = 95
 percint = 5
-thres_eval = seq(2.5,4.5,0.25)^4 #discharge threshold for evaluation
+thres_eval = seq(2.5,4.5,0.125)^4 #discharge threshold for evaluation
 minpredictant = 1.5 #minimum sum of discharges considered as thunderstorm case
 
 #read data, years, VT, LT and regions. Change VT, LT and regions for subset fitting.
 setwd("/usr/people/groote/")
 ObsPV = read.csv(file = "full_final00z_dataset2.csv")
 colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","validtime2","region","leadtime_count")
-ObsPV$leadtime_count = ObsPV$leadtime_count/6
+ObsPV$leadtime_count = ObsPV$leadtime_count
 ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
 #VT = unique(ObsPV$validtime)[VT_i]
-VT = paste0("Init_00z",pct_min)
+VT = "Init_00z"
 regions = c(unique(ObsPV$region))#[1:2]
 
 ###
@@ -75,8 +75,8 @@ fit_test_all_pot_pred <- function(train_set, predictant, pot_pred_indices, train
   #this function selects the best predictor by forward fittng; trying potential predictors and selecting the one with lowest AIC
   AICscores = list()
   for(i in names(train_set[pot_pred_indices])){
-    print(names(train_set[i]))
-    print(names(train_set[used_preds]))
+   # print(names(train_set[i]))
+   # print(names(train_set[used_preds]))
     model = hxlr(reformulate(termlabels = names(data.frame(train_set[i], train_set[used_preds])),
                              response = as.name(names(train_set[predictant]))),
                  data=data.frame(train_set[predictant], train_set[i], train_set[used_preds]),
