@@ -66,7 +66,7 @@ write.csv(maxdataset, "Maxdischarges_dataset.csv")
 library(dplyr)
 
 #merge with predictors data frame using id
-ObsPV = read.csv("Final_predictors_00zset.csv")
+ObsPV = read.csv("Testdata_06z.csv")
 year = round(ObsPV$Init_date/10000)
 dates=sort(unique(ObsPV$Init_date%%10000))
 dates =c(dates, dates[length(dates)]+1)
@@ -79,11 +79,11 @@ for(i in seq(1, nrow(ObsPV))){
   new[i]=max(matrix_four[i,])
 }
 # change this line for the other runs!!! 
-#new = new+as.numeric(ObsPV$Forecast_hours_mean>23.999)
+new = new+as.numeric(ObsPV$Forecast_hours_mean>17.999)+as.numeric(ObsPV$Forecast_hours_mean>41.999)
 print("change the forecast_hours_mean_threshold!!!!!!!")
 print(somewhere)
 valid_dates = dates[new]
-valid_time = sprintf("VT_%02d%02d",ObsPV$Forecast_hours_min%%24,ObsPV$Forecast_hours_max%%24)
+valid_time = sprintf("VT_%02d%02d",(ObsPV$Forecast_hours_min+6)%%24,(ObsPV$Forecast_hours_max+6)%%24)
 ObsPV = cbind(Year = year, Valid_date = valid_dates, Month = round(valid_dates/100), Day = valid_dates%%100, validtime = valid_time, ObsPV)
 ObsPV = data.frame(id = paste("id",ObsPV$Region,ObsPV$Year,as.numeric(ObsPV$Month),as.numeric(ObsPV$Day),ObsPV$validtime),ObsPV)
 ObsPV$id = as.character(ObsPV$id)
@@ -93,4 +93,4 @@ new_Obs <- left_join(ObsPV, dataset, by = "id")
 new_Obs <- left_join(new_Obs, maxdataset, by = "id")
 
 #write the result to a new file
-write.csv(new_Obs, "full_final00z_dataset.csv")
+write.csv(new_Obs, "testset_for_06z.csv")
