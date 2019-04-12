@@ -15,7 +15,7 @@ library(arm)
 library(crch)
 library(profvis)
 
-print("ELR_blocks2 active for")
+print("ELR_blocks4 active for")
 print("LT_i equals:")
 print(LT_i)
 print("------")
@@ -32,7 +32,7 @@ numsubset = 3 #number of subsets for hyperparameter selection
 percmin = 50
 percmax = 95
 percint = 5
-thres_eval = seq(2.5,4.5,0.125)^4 #discharge threshold for evaluation
+thres_eval = seq(25,400,25) #discharge threshold for evaluation
 minpredictant = 1.5 #minimum sum of discharges considered as thunderstorm case
 
 #read data, years, VT, LT and regions. Change VT, LT and regions for subset fitting.
@@ -45,7 +45,7 @@ setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
 #VT = unique(ObsPV$validtime)[VT_i]
-VT = "Init_00z"
+VT = "Init_00z_few_with11"
 regions = c(unique(ObsPV$region))#[1:2]
 
 ###

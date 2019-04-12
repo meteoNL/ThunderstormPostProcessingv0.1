@@ -18,9 +18,9 @@ print(VT_i)
 
 #hyperparameters settings
 numbtree = 500
-m_settings = c(2, 6, 10)
+m= 2
 min_length = 1
-node_size_settings = c(3, 9, 15)#50
+node_size = 9#50
 
 # import the data frame and generate training and testing set
 minpredictant = 1.5 #1.5 discharges
@@ -30,14 +30,13 @@ colnames(ObsPV)[c(3,4,5,6,7,10,11)] <- c("Year","validdate","Month","Day","valid
 ObsPV$leadtime_count = ObsPV$leadtime_count
 ObsPV$validdate = ObsPV$validdate+ObsPV$Year*10000
 nmem = 25 #number of members for ensemble CRPS
-numbsubset = 3
 p=0.25
 
 #valid time, regions, lead time values and apply selection for one combination of VT and LT
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
 #VT = unique(ObsPV$validtime)[VT_i]
-VT = "Init_00z_few_with11"
+VT = paste0("Init_00z_finalcross",length(varindex_shell))
 regions = c(unique(ObsPV$region))
 #ObsPV=cbind(ObsPV, selector = as.numeric(as.character(VT)==as.character(ObsPV$validtime))*as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
 ObsPV=cbind(ObsPV, selector = as.numeric(as.character(LT)==as.character(ObsPV$leadtime_count)))
@@ -46,7 +45,7 @@ climset <- filter(ObsPV, selector == 1 & Ndischarge > minpredictant)
 # initial predictor set containing all predictors; predictand and evaluation thresholds
 orig_varindex = varindex_shell
 predictant_ind = 627
-thres_eval = seq(2.5,4.5,0.125)^4
+thres_eval = seq(25,400,25)
 climset[predictant_ind]=climset[predictant_ind]^p
 
 ### Above this point, the settings for a run have been defined!! #####
@@ -85,8 +84,8 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
   #  print(remove_variable)
 
     #evaluate continuous ranked probability score
-    #qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(0.5,nmem-0.5)/nmem)$predictions
-    #qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
+    qrf_pred_quan = predict(fit1, data.frame(test_set[, pot_preds]), type = "quantiles", quantiles = seq(0.5,nmem-0.5)/nmem)$predictions
+    qrf_pred_quan = data.frame(qrf_pred_quan, occurence = test_set[predictant_index], region = test_set["region"], npred = length(varindexset), mtry = m_hyp, effmtry = min(m_hyp, length(varindexset)), min_n_size = node_size_hyp, w = wval, y = yval)
     ######
 
     qrf_pred = data.frame()
@@ -111,13 +110,13 @@ qrf_procedure_thres <- function(train_set, test_set, predictant_index, varindexs
 
     #add predictions (probabilities & ensemble members for CRPS) for this number of predictors to other predictions for any number of predictors and the most important predictors
     overall_scores_local = rbind(overall_scores_local, qrf_pred)
-    #overall_quan = rbind(overall_quan, qrf_pred_quan)
+    overall_quan = rbind(overall_quan, qrf_pred_quan)
     importances_save = rbind(importances_save, test_importance_save)
   }
 
   #return results for all numbers of predictors
   result$overall_scores_local = overall_scores_local
-  #result$overall_quan = overall_quan
+  result$overall_quan = overall_quan
   result$importances_save = importances_save
   return(result)
 }
@@ -132,41 +131,12 @@ for (y in years){
   #select first 2 years out of three
   train_y = filter(climset, Year != y)
   test_y = filter(climset, Year == y)
-  set.seed(15+seq(years)[q]) #for reproducability purposes
+  varindex = orig_varindex
 
-  #then make three random subsets based on date
-  testdf = data.frame(validdate = unique(train_y$validdate), subset = round(runif(unique(train_y$validdate))*numbsubset+0.5))
-  train_sub <- left_join(train_y, testdf, by = names(testdf)[1])
-  for (w in seq(numbsubset)){
-    print(y)
-    print(w)
-
-    #declare testing and training datasets
-    train_q = filter(train_sub, subset != w)
-    test_q = filter(train_sub, subset == w)
-    #print(train_q)
-    #do a loop over the hyperparameter settings
-    for (node_size in node_size_settings){
-      #print("node size equals: ")
-      #print(node_size)
-      for (m in m_settings){
-        #print("m equals: ")
-        #print(m)
-
-        #reset to all predictors
-        varindex = orig_varindex
-
-        #apply QRF fitting procedures
-        result = qrf_procedure_thres(train_q, test_q, predictant_ind, varindex, m, numbtree, node_size, min_length, w, y)
-
-        #save predictions for ENS CRPS and Brier Skill Score calculation
-        overall_scores = rbind(overall_scores, result$overall_scores_local)
-        #overall_scores_quan = rbind(overall_scores_quan, result$overall_quan)
-        importances_dataset = rbind(importances_dataset, result$importances_save)
-      }
-    }
-  }
-  q = q + 1
+  result = qrf_procedure_thres(train_y, test_y, predictant_ind, varindex, m, numbtree, node_size, min_length, 1, y)
+  overall_scores = rbind(overall_scores, result$overall_scores_local)
+  overall_scores_quan = rbind(overall_scores_quan, result$overall_quan)
+  importances_dataset = rbind(importances_dataset, result$importances_save)
 }
 #this table will contain for all hyperparameters (mtry, node_size, npredictors), per region, per threshold and per testsubset
 setwd("/usr/people/groote/ThunderstormPostProcessingv1/rangerres")
@@ -193,34 +163,3 @@ write.csv(qrf_ss, file=paste0("qrf_thresholds_ss_imp_newrandom_",VT,"_LT_",LT,".
 write.csv(qrf_bs, file=paste0("qrf_thresholds_bs_imp_newrandom_",VT,"_LT_",LT,".csv"))
 write.csv(qrf_crps, file=paste0("qrf_thresholds_crps_imp_newrandom_",VT,"_LT_",LT,".csv"))
 write.csv(importances_dataset, file=paste0("imp_",VT,"_LT_",LT,".csv"))
-
-#-----------------------------------------------------------------
-## Testing the functions
-
-set.seed(712)
-x1 = rnorm(1000,0,5)
-x2 = rnorm(1000,0,5)
-x3 = rnorm(1000,0,5)
-pert = rnorm(1000,0,5)
-yvalues = x1*25+x2*100+pert
-test_df = data.frame(x1, x2, x3, yvalues)
-library(devtools)
-library(testthat)
-usethis::use_testthat()
-form = test_df["yvalues"] ~.
-qrf_fit_test <- ranger(form, data = data.frame(test_df[seq(1,3)]), num.trees=250, mtry = 1, min.node.size = 5, quantreg = TRUE, importance ="permutation")
-importance_table = qrf_fit_test$variable.importance
-test_that("Predictor ranking of dataset",{
-  expect_gt(importance_table[2],importance_table[1])
-  expect_gt(importance_table[1],importance_table[3])
-})
-test_that("Dataset complete?",{
-  expect_equal(climset %>% arrange(Year, Month, Day), rbind(train_y, test_y) %>% arrange(Year, Month, Day))
-  expect_equal(rbind(train_q,test_q) %>% arrange(Year, Month, Day, region),train_sub %>% arrange(Year, Month, Day, region))
-})
-
-test_that("Random subset numbers",{
-  expect_equal(min(testdf$subset),1)
-  expect_equal(max(testdf$subset),3)
-})
-

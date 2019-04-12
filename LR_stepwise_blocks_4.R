@@ -32,7 +32,7 @@ setwd("/usr/people/groote/ThunderstormPostProcessingv1/")
 # get years, regions, VT and LT in data set and set values for selection/subset to fit
 years = c(as.numeric(unique(ObsPV$Year)))
 LT = c(as.numeric(unique(ObsPV$leadtime_count)))[LT_i]
-VT ="Init_00z"# unique(ObsPV$validtime)[VT_i]
+VT ="Init_00z_few_with11"# unique(ObsPV$validtime)[VT_i]
 regions = c(unique(ObsPV$region))
 threshold = 1.50 #number of discharges threshold for thunderstorm case
 

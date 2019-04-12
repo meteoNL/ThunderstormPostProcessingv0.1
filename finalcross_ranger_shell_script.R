@@ -32,29 +32,14 @@ varindex_shell = c(varindex_shell2, 416, 359, 526, 534)
 ## end of 90 set
 
 #15 predictors set for 00z run
-varindex_shell = c(22,38,54,198,224,350,359,382,416,422,464,470,526,550,604)
+#varindex_shell = c(22,38,54,198,224,350,359,382,416,422,464,470,526,550,604)
 #additional 6 for 21 set for 00z run
-varindex_shell = c(varindex_shell,222,262,270,278,586,587)
-varindex_shell = c(22,38,54,198,224,350,359,382,416,422,550)
+#varindex_shell = c(varindex_shell,222,262,270,278,586,587)
 for(LT_i in LT_val){
   setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-  tryCatch({source("ELR_building_blocks4.R")},
-           error = function(err){print(err)
-             setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-             source("ELR_building_blocks3.R")
-           })
-  while (length(dev.list())>0){
-    dev.off()
-  }
+  source("rangerthres_finalcross.R")
   setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-  source("LR_stepwise_blocks_4.R")
-  while (length(dev.list())>0){
-    dev.off()
-  }
-  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-  source("rangerthres_newrandom.R")
-  setwd("/usr/people/groote/ThunderstormPostProcessingv1/R")
-  source("rangertrying_newrandom.R")
+  source("rangertrying_finalcross.R")
 }
 
 print("The tasks have been completed")
